@@ -10,9 +10,7 @@ type Pair<'a> = pest::iterators::Pair<'a, Rule>;
 
 fn parse_pair(pair: Pair) -> Result<Term, ()> {
     match pair.as_rule() {
-        Rule::Variable => {
-            Ok(Term::Var(pair.as_str().to_owned()))
-        }
+        Rule::Variable => Ok(Term::Var(pair.as_str().to_owned())),
         Rule::Abstraction => {
             let mut inner = pair.into_inner();
             let var_name = inner.next().unwrap().as_str().to_owned();
@@ -28,7 +26,11 @@ fn parse_pair(pair: Pair) -> Result<Term, ()> {
             Ok(Term::Apply(Box::new(term_a), Box::new(term_b)))
         }
         _ => {
-            panic!("Unhandled rule: {:?}, span: {:?}", pair.as_rule(), pair.as_str());
+            panic!(
+                "Unhandled rule: {:?}, span: {:?}",
+                pair.as_rule(),
+                pair.as_str()
+            );
         }
     }
 }
