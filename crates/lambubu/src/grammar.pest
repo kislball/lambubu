@@ -3,7 +3,8 @@ WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
 LambdaCharacter = _{ "\\" | "λ" | ",\\" }
 Dot             = _{ "." }
 
-Variable = @{ ASCII_ALPHA ~ (ASCII_ALPHA | "'")* }
+Variable = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHA_LOWER | "'")* }
+MacrosName = @{ (ASCII_ALPHA_UPPER | ASCII_DIGIT)+ }
 
 Abstraction = {
     LambdaCharacter ~ Variable ~ Dot ~ Term
@@ -22,6 +23,7 @@ Term = _{
   | Variable
   | Parenthesized
   | Application
+  | MacrosName
 }
 
 File = _{ SOI ~ Term ~ EOI }

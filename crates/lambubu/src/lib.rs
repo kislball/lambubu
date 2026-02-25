@@ -1,6 +1,7 @@
 use std::fmt::{self, Display, Formatter};
 
-pub mod parse;
+pub mod compile;
+pub mod env;
 #[cfg(test)]
 mod tests;
 
@@ -52,7 +53,7 @@ impl Term {
     fn rename_free(self, from: &str, to: &str) -> Self {
         if self.is_free_variable(from) {
             match self {
-                Term::Var(v) if &v == from => Term::Var(to.to_owned()),
+                Term::Var(v) if v == from => Term::Var(to.to_owned()),
                 Term::Abs(v, body) if v != from => {
                     Term::Abs(v, Box::new(body.rename_free(from, to)))
                 }
@@ -69,8 +70,8 @@ impl Term {
 
     pub fn substitute(self, what: &str, with: Term) -> Term {
         match self {
-            Term::Var(name) if what == &name => with,
-            Term::Abs(variable, body) if &variable != what => {
+            Term::Var(name) if what == name => with,
+            Term::Abs(variable, body) if variable != what => {
                 let (name, body) = if with.is_free_variable(&variable) {
                     let mut fresh = variable.clone();
                     while with.is_free_variable(&fresh)
