@@ -1,6 +1,9 @@
 use crate::Term;
 use std::collections::HashMap;
 
+pub mod church;
+pub use church::ChurchEnvironment;
+
 pub trait TermEnvironment {
     fn resovle_term(&self, name: &str) -> Option<Term>;
 }
@@ -35,11 +38,21 @@ impl MutableTermEnvironment for RegistryEnvironment {
 #[derive(Default)]
 pub struct CompoundEnvironment {
     envs: Vec<Box<dyn TermEnvironment>>,
+    terms: HashMap<String, Term>,
+}
+
+impl MutableTermEnvironment for CompoundEnvironment {
+    fn add_term(&mut self, name: String, term: Term) {
+        self.terms.insert(name, term);
+    }
 }
 
 impl CompoundEnvironment {
     pub fn new(envs: Vec<Box<dyn TermEnvironment>>) -> Self {
-        Self { envs }
+        Self {
+            envs,
+            terms: HashMap::new(),
+        }
     }
 
     pub fn decompose(self) -> Vec<Box<dyn TermEnvironment>> {
@@ -49,6 +62,14 @@ impl CompoundEnvironment {
 
 impl TermEnvironment for CompoundEnvironment {
     fn resovle_term(&self, name: &str) -> Option<Term> {
-        self.envs.iter().filter_map(|x| x.resovle_term(name)).next()
+        self.terms.get(name).cloned().or(self
+            .envs
+            .iter()
+            .filter_map(|x| x.resovle_term(name))
+            .next())
     }
+}
+
+pub fn standard_environment() -> CompoundEnvironment {
+    CompoundEnvironment::new(vec![Box::new(ChurchEnvironment)])
 }
