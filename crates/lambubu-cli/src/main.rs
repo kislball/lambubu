@@ -1,9 +1,6 @@
 use std::io;
 
-use lambubu::{
-    compile::compile_term,
-    env::standard_environment,
-};
+use lambubu::{compile::compile_term, env::standard_environment};
 
 fn main() {
     let mut buffer = String::new();
