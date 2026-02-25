@@ -1,0 +1,27 @@
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+
+LambdaCharacter = _{ "\\" | "λ" | ",\\" }
+Dot = _{ "." }
+
+Variable = @{ ASCII_ALPHA ~ (ASCII_ALPHA | "'")* }
+
+Abstraction = {
+    LambdaCharacter ~ Variable ~ Dot ~ Term
+}
+
+Application = {
+    "(" ~ Term ~ Term ~ ")"
+}
+
+Parenthesized = _{
+    "(" ~ Term ~ ")"
+}
+
+Term = _{
+    Abstraction |
+    Variable
+    | Parenthesized
+    | Application
+}
+
+File = _{ SOI ~ Term ~ EOI }
