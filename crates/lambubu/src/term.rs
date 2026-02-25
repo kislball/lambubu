@@ -17,7 +17,7 @@ impl Display for Term {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Term::Var(v) => write!(f, "{v}")?,
-            Term::Abs(var, term) => write!(f, "({SYMBOL_LAMBDA}{var}.{term})")?,
+            Term::Abs(var, term) => write!(f, "{SYMBOL_LAMBDA}{var}.{term}")?,
             Term::Apply(term1, term2) => write!(f, "({term1} {term2})")?,
         };
         Ok(())
