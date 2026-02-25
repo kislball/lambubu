@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::Term;
+use std::collections::HashMap;
 
 pub trait TermEnvironment {
     fn resovle_term(&self, name: &str) -> Option<Term>;

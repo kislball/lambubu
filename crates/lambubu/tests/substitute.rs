@@ -1,4 +1,4 @@
-use crate::Term;
+use lambubu::Term;
 
 // x[x := y] = y
 #[test]
