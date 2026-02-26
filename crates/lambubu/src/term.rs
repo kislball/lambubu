@@ -91,6 +91,17 @@ impl Term {
         }
     }
 
+    pub fn is_normal_form(&self) -> bool {
+        match self {
+            Term::Var(_) => true,
+            Term::Abs(_, body) => body.is_normal_form(),
+            Term::Apply(t1, t2) => match t1.as_ref() {
+                Term::Abs(_, _) => false,
+                _ => t1.is_normal_form() && t2.is_normal_form(),
+            },
+        }
+    }
+
     pub fn reduce_step_call_by_name(self) -> Self {
         match self {
             Self::Var(_) | Self::Abs(_, _) => self,
