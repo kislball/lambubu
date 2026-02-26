@@ -68,19 +68,10 @@ fn cbv_stops_at_weak_normal_form() {
         "f",
         Term::abs(
             "x",
-            Term::app(
-                Term::var("f"),
-                Term::app(Term::var("f"), Term::var("x")),
-            ),
+            Term::app(Term::var("f"), Term::app(Term::var("f"), Term::var("x"))),
         ),
     );
     let term = Term::app(church_2, id.clone());
-    let expected = Term::abs(
-        "x",
-        Term::app(
-            id.clone(),
-            Term::app(id, Term::var("x")),
-        ),
-    );
+    let expected = Term::abs("x", Term::app(id.clone(), Term::app(id, Term::var("x"))));
     assert_eq!(reduce_to_fixed_point(term), expected);
 }

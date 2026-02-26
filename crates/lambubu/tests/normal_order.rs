@@ -17,7 +17,10 @@ fn no_basic_beta() {
 // λz.(λx.x) a →_no λz.a  (reduces under λ, unlike CBN/CBV)
 #[test]
 fn no_reduces_under_lambda() {
-    let term = Term::abs("z", Term::app(Term::abs("x", Term::var("x")), Term::var("a")));
+    let term = Term::abs(
+        "z",
+        Term::app(Term::abs("x", Term::var("x")), Term::var("a")),
+    );
     assert_eq!(
         term.reduce_step_normal_order(),
         Term::abs("z", Term::var("a"))
@@ -33,10 +36,7 @@ fn no_does_not_reduce_argument_before_substitution() {
         Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
         arg.clone(),
     );
-    assert_eq!(
-        term.reduce_step_normal_order(),
-        Term::app(arg.clone(), arg)
-    );
+    assert_eq!(term.reduce_step_normal_order(), Term::app(arg.clone(), arg));
 }
 
 // (λx.λy.x) a b →*_no a  (K combinator)
@@ -61,10 +61,7 @@ fn no_full_church_2_applied_to_id() {
         "f",
         Term::abs(
             "x",
-            Term::app(
-                Term::var("f"),
-                Term::app(Term::var("f"), Term::var("x")),
-            ),
+            Term::app(Term::var("f"), Term::app(Term::var("f"), Term::var("x"))),
         ),
     );
     let term = Term::app(church_2, id);
