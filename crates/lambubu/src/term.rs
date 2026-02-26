@@ -104,31 +104,22 @@ impl Term {
 
     pub fn reduce_step_call_by_name(self) -> Self {
         match self {
-            Self::Var(_) | Self::Abs(_, _) => self,
-            Self::Apply(t1, t2) => {
-                let t1 = t1.reduce_step_call_by_name();
-                match t1 {
-                    Term::Abs(var, body) => body.substitute(&var, *t2),
-                    _ => Term::Apply(Box::new(t1), t2),
-                }
-            }
+            Self::Apply(t1, t2) => match *t1 {
+                Self::Abs(var, body) => body.substitute(&var, *t2),
+                other => Self::Apply(Box::new(other.reduce_step_call_by_name()), t2),
+            },
+            _ => self,
         }
     }
 
     pub fn reduce_step_normal_order(self) -> Self {
         match self {
-            Self::Var(_) => self,
-            Self::Abs(var, body) => Self::Abs(var, Box::new(body.reduce_step_normal_order())),
-            Self::Apply(t1, t2) => {
-                let e1 = t1.reduce_step_call_by_name();
-                match e1 {
-                    Self::Abs(var, body) => body.substitute(&var, *t2),
-                    _ => Self::Apply(
-                        Box::new(e1.reduce_step_normal_order()),
-                        Box::new(t2.reduce_step_normal_order()),
-                    ),
-                }
-            }
+            Self::Apply(t1, t2) => match *t1 {
+                Self::Abs(name, body) => body.substitute(&name, *t2),
+                other => Self::Apply(Box::new(other.reduce_step_normal_order()), t2),
+            },
+            Self::Abs(name, body) => Self::Abs(name, Box::new(body.reduce_step_normal_order())),
+            other => other,
         }
     }
 
@@ -136,11 +127,16 @@ impl Term {
         match self {
             Self::Var(_) | Self::Abs(_, _) => self,
             Self::Apply(t1, t2) => {
-                let t1 = t1.reduce_step_call_by_value();
-                let t2 = t2.reduce_step_call_by_value();
-                match t1 {
-                    Term::Abs(var, body) => body.substitute(&var, t2),
-                    _ => Term::Apply(Box::new(t1), Box::new(t2)),
+                if let Self::Abs(t1_name, t1_body) = *t1 {
+                    match *t2 {
+                        Self::Var(_) | Self::Abs(_, _) => t1_body.substitute(&t1_name, *t2),
+                        _ => Self::Apply(
+                            Box::new(Self::Abs(t1_name, t1_body)),
+                            Box::new(t2.reduce_step_call_by_value()),
+                        ),
+                    }
+                } else {
+                    Self::Apply(Box::new(t1.reduce_step_call_by_value()), t2)
                 }
             }
         }
@@ -148,20 +144,21 @@ impl Term {
 
     pub fn reduce_step_applicative_order(self) -> Self {
         match self {
-            Self::Var(_) => self,
+            Self::Apply(t1, t2) => {
+                if !t1.is_normal_form() {
+                    Self::Apply(Box::new(t1.reduce_step_applicative_order()), t2)
+                } else if !t2.is_normal_form() {
+                    Self::Apply(t1, Box::new(t2.reduce_step_applicative_order()))
+                } else if let Self::Abs(name, body) = *t1 {
+                    body.substitute(&name, *t2)
+                } else {
+                    Self::Apply(t1, t2)
+                }
+            }
             Self::Abs(name, body) => {
                 Self::Abs(name, Box::new(body.reduce_step_applicative_order()))
             }
-            Self::Apply(t1, t2) => {
-                let t1 = t1.reduce_step_applicative_order();
-                let t2 = t2.reduce_step_applicative_order();
-                match t1 {
-                    Term::Abs(var, body) => {
-                        body.reduce_step_applicative_order().substitute(&var, t2)
-                    }
-                    _ => Term::Apply(Box::new(t1), Box::new(t2)),
-                }
-            }
+            other => other,
         }
     }
 }
