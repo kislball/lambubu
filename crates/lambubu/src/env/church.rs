@@ -6,6 +6,8 @@ impl TermEnvironment for ChurchEnvironment {
     fn resovle_term(&self, name: &str) -> Option<Term> {
         match name {
             "ADD" => Some(self.add()),
+            "SUCC" => Some(self.succ()),
+            "IF" | "BRANCH" => Some(self.branch()),
             "ZERO" | "0" => Some(self.zero()),
             "FALSE" | "F" => Some(self.bool_false()),
             "TRUE" | "T" => Some(self.bool_true()),
@@ -35,6 +37,35 @@ impl ChurchEnvironment {
         }
 
         Term::abs("f", Term::abs("x", num))
+    }
+
+    pub fn succ(&self) -> Term {
+        Term::abs(
+            "n",
+            Term::abs(
+                "f",
+                Term::abs(
+                    "x",
+                    Term::app(
+                        Term::var("f"),
+                        Term::app(Term::app(Term::var("n"), Term::var("f")), Term::var("x")),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    pub fn branch(&self) -> Term {
+        Term::abs(
+            "f",
+            Term::abs(
+                "a",
+                Term::abs(
+                    "b",
+                    Term::app(Term::app(Term::var("f"), Term::var("a")), Term::var("b")),
+                ),
+            ),
+        )
     }
 
     pub fn add(&self) -> Term {
