@@ -1,4 +1,5 @@
 use lambubu::{Term, env::TermEnvironment};
+use lambubu_macro::term;
 
 pub struct ChurchEnvironment;
 
@@ -18,7 +19,7 @@ impl TermEnvironment for ChurchEnvironment {
 
 impl ChurchEnvironment {
     pub fn zero(&self) -> Term {
-        Term::abs("f", Term::abs("x", Term::var("x")))
+        term!("\\a.\\b.b")
     }
 
     pub fn bool_false(&self) -> Term {
@@ -26,7 +27,7 @@ impl ChurchEnvironment {
     }
 
     pub fn bool_true(&self) -> Term {
-        Term::abs("a", Term::abs("b", Term::var("a")))
+        term!("\\a.\\b.a")
     }
 
     pub fn numeral(&self, number: u32) -> Term {
@@ -40,50 +41,14 @@ impl ChurchEnvironment {
     }
 
     pub fn succ(&self) -> Term {
-        Term::abs(
-            "n",
-            Term::abs(
-                "f",
-                Term::abs(
-                    "x",
-                    Term::app(
-                        Term::var("f"),
-                        Term::app(Term::app(Term::var("n"), Term::var("f")), Term::var("x")),
-                    ),
-                ),
-            ),
-        )
+        term!("\\n.\\f.\\x.(f ((n f) x))")
     }
 
     pub fn branch(&self) -> Term {
-        Term::abs(
-            "f",
-            Term::abs(
-                "a",
-                Term::abs(
-                    "b",
-                    Term::app(Term::app(Term::var("f"), Term::var("a")), Term::var("b")),
-                ),
-            ),
-        )
+        term!("\\f.\\a.\\b. ((f a) b)")
     }
 
     pub fn add(&self) -> Term {
-        Term::abs(
-            "m",
-            Term::abs(
-                "n",
-                Term::abs(
-                    "f",
-                    Term::abs(
-                        "x",
-                        Term::app(
-                            Term::app(Term::var("n"), Term::var("f")),
-                            Term::app(Term::app(Term::var("m"), Term::var("f")), Term::var("x")),
-                        ),
-                    ),
-                ),
-            ),
-        )
+        term!("\\m.\\n.\\f.\\x.((n f) ((m f) x))")
     }
 }

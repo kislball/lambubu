@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 lambubu = { path = "../lambubu" }
+lambubu_macro = { path = "../lambubu_macro" }
