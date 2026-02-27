@@ -70,6 +70,7 @@ name = "lambubu_church"
 version = "0.1.0"
 dependencies = [
  "lambubu",
+ "lambubu_macro",
 ]
 
 [[package]]
@@ -78,6 +79,16 @@ version = "0.1.0"
 dependencies = [
  "lambubu",
  "lambubu_church",
+]
+
+[[package]]
+name = "lambubu_macro"
+version = "0.1.0"
+dependencies = [
+ "lambubu",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
