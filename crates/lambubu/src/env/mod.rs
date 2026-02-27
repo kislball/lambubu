@@ -5,7 +5,7 @@ pub mod church;
 pub use church::ChurchEnvironment;
 
 pub trait TermEnvironment {
-    fn resovle_term(&self, name: &str) -> Option<Term>;
+    fn resolve_term(&self, name: &str) -> Option<Term>;
 }
 
 pub trait MutableTermEnvironment: TermEnvironment {
@@ -24,7 +24,7 @@ impl RegistryEnvironment {
 }
 
 impl TermEnvironment for RegistryEnvironment {
-    fn resovle_term(&self, name: &str) -> Option<Term> {
+    fn resolve_term(&self, name: &str) -> Option<Term> {
         self.terms.get(name).cloned()
     }
 }
@@ -61,11 +61,11 @@ impl CompoundEnvironment {
 }
 
 impl TermEnvironment for CompoundEnvironment {
-    fn resovle_term(&self, name: &str) -> Option<Term> {
+    fn resolve_term(&self, name: &str) -> Option<Term> {
         self.terms.get(name).cloned().or(self
             .envs
             .iter()
-            .filter_map(|x| x.resovle_term(name))
+            .filter_map(|x| x.resolve_term(name))
             .next())
     }
 }

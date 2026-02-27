@@ -3,7 +3,7 @@ use crate::{Term, env::TermEnvironment};
 pub struct ChurchEnvironment;
 
 impl TermEnvironment for ChurchEnvironment {
-    fn resovle_term(&self, name: &str) -> Option<Term> {
+    fn resolve_term(&self, name: &str) -> Option<Term> {
         match name {
             "ADD" => Some(self.add()),
             "SUCC" => Some(self.succ()),

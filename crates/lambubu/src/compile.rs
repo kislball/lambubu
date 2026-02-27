@@ -36,7 +36,7 @@ fn compile_pair<'a>(
             Ok(Term::Apply(Box::new(term_a), Box::new(term_b)))
         }
         Rule::MacrosName => {
-            env.resovle_term(pair.as_str())
+            env.resolve_term(pair.as_str())
                 .ok_or(CompilationError::UnknownMacros {
                     macro_name: pair.as_str().to_owned(),
                     span: pair.as_span(),
