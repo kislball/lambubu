@@ -1,6 +1,11 @@
 use std::io;
 
-use lambubu::{compile::compile_term, env::standard_environment};
+use lambubu::{CompoundEnvironment, compile::compile_term};
+use lambubu_church::ChurchEnvironment;
+
+fn standard_environment() -> CompoundEnvironment {
+    CompoundEnvironment::new(vec![Box::new(ChurchEnvironment)])
+}
 
 fn main() {
     let mut buffer = String::new();

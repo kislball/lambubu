@@ -66,10 +66,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "lambubu-cli"
+name = "lambubu_church"
 version = "0.1.0"
 dependencies = [
  "lambubu",
+]
+
+[[package]]
+name = "lambubu_cli"
+version = "0.1.0"
+dependencies = [
+ "lambubu",
+ "lambubu_church",
 ]
 
 [[package]]

@@ -1,9 +1,6 @@
 use crate::Term;
 use std::collections::HashMap;
 
-pub mod church;
-pub use church::ChurchEnvironment;
-
 pub trait TermEnvironment {
     fn resolve_term(&self, name: &str) -> Option<Term>;
 }
@@ -68,8 +65,4 @@ impl TermEnvironment for CompoundEnvironment {
             .filter_map(|x| x.resolve_term(name))
             .next())
     }
-}
-
-pub fn standard_environment() -> CompoundEnvironment {
-    CompoundEnvironment::new(vec![Box::new(ChurchEnvironment)])
 }

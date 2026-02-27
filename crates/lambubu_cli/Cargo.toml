@@ -1,0 +1,8 @@
+[package]
+name = "lambubu_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lambubu = { path = "../lambubu" }
+lambubu_church = { path = "../lambubu_church" }

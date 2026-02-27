@@ -1,4 +1,4 @@
-use crate::{Term, env::TermEnvironment};
+use lambubu::{Term, env::TermEnvironment};
 
 pub struct ChurchEnvironment;
 
