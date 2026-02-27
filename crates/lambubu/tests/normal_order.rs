@@ -67,3 +67,16 @@ fn no_full_church_2_applied_to_id() {
     let term = Term::app(church_2, id);
     assert_eq!(reduce_to_normal(term), Term::abs("x", Term::var("x")));
 }
+
+// (x) ((\y.y) z)
+#[test]
+fn no_argument_reduction() {
+    let term = Term::app(
+        Term::var("x"),
+        Term::app(Term::abs("y", Term::var("y")), Term::var("z")),
+    );
+    assert_eq!(
+        reduce_to_normal(term),
+        Term::app(Term::var("x"), Term::var("z"))
+    );
+}

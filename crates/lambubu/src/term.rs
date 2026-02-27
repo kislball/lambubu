@@ -116,7 +116,10 @@ impl Term {
         match self {
             Self::Apply(t1, t2) => match *t1 {
                 Self::Abs(name, body) => body.substitute(&name, *t2),
-                other => Self::Apply(Box::new(other.reduce_step_normal_order()), t2),
+                other if !other.is_normal_form() => {
+                    Self::Apply(Box::new(other.reduce_step_normal_order()), t2)
+                }
+                other => Self::Apply(Box::new(other), Box::new(t2.reduce_step_normal_order())),
             },
             Self::Abs(name, body) => Self::Abs(name, Box::new(body.reduce_step_normal_order())),
             other => other,
