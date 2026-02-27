@@ -8,12 +8,12 @@ fn term_to_tokens(term: &Term) -> TokenStream2 {
     match term {
         Term::Var(name) => quote! {Term::Var(#name.to_string())},
         Term::Abs(name, body) => {
-            let b2 = term_to_tokens(&body);
+            let b2 = term_to_tokens(body);
             quote! { Term::Abs(#name.to_string(), Box::new(#b2)) }
         }
         Term::Apply(a, b) => {
-            let a2 = term_to_tokens(&a);
-            let b2 = term_to_tokens(&b);
+            let a2 = term_to_tokens(a);
+            let b2 = term_to_tokens(b);
             quote! {Term::Apply(Box::new(#a2), Box::new(#b2))}
         }
     }
@@ -27,7 +27,7 @@ pub fn term(input: TokenStream) -> TokenStream {
     let compiled = match compile_term(&s, &mut CompoundEnvironment::new(vec![])) {
         Ok(term) => term,
         Err(_) => {
-            return syn::Error::new(lit.span(), format!("Invalid term"))
+            return syn::Error::new(lit.span(), String::from("Invalid term"))
                 .to_compile_error()
                 .into();
         }
