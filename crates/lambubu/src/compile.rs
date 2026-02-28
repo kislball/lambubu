@@ -2,6 +2,7 @@ use crate::{
     Term,
     env::{MutableTermEnvironment, TermEnvironment},
 };
+use std::rc::Rc;
 use pest::{Parser, Span};
 use pest_derive::Parser;
 
@@ -24,22 +25,22 @@ fn compile_pair<'a>(
     env: &impl TermEnvironment,
 ) -> Result<Term, CompilationError<'a>> {
     match pair.as_rule() {
-        Rule::Variable => Ok(Term::Var(pair.as_str().to_owned())),
+        Rule::Variable => Ok(Term::Var(Rc::from(pair.as_str()))),
         Rule::Abstraction => {
             let mut inner = pair.into_inner();
-            let var_name = inner.next().unwrap().as_str().to_owned();
+            let var_name = inner.next().unwrap().as_str();
             let term = compile_pair(inner.next().unwrap(), env)?;
 
-            Ok(Term::Abs(var_name, Box::new(term)))
+            Ok(Term::Abs(Rc::from(var_name), Rc::new(term)))
         }
         Rule::Application => {
             let mut inner = pair.into_inner().map(|x| compile_pair(x, env));
             let first = inner.next().unwrap()?;
             let second = inner.next().unwrap()?;
-            let mut result = Term::Apply(Box::new(first), Box::new(second));
+            let mut result = Term::Apply(Rc::new(first), Rc::new(second));
 
             for i in inner {
-                result = Term::Apply(Box::new(result), Box::new(i?));
+                result = Term::Apply(Rc::new(result), Rc::new(i?));
             }
 
             Ok(result)
