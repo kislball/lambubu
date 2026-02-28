@@ -29,11 +29,16 @@ fn compile_pair<'a>(
             Ok(Term::Abs(var_name, Box::new(term)))
         }
         Rule::Application => {
-            let mut inner = pair.into_inner();
-            let term_a = compile_pair(inner.next().unwrap(), env)?;
-            let term_b = compile_pair(inner.next().unwrap(), env)?;
+            let mut inner = pair.into_inner().map(|x| compile_pair(x, env));
+            let first = inner.next().unwrap()?;
+            let second = inner.next().unwrap()?;
+            let mut result = Term::Apply(Box::new(first), Box::new(second));
 
-            Ok(Term::Apply(Box::new(term_a), Box::new(term_b)))
+            for i in inner {
+                result = Term::Apply(Box::new(result), Box::new(i?));
+            }
+
+            Ok(result)
         }
         Rule::MacrosName => {
             env.resolve_term(pair.as_str())
@@ -54,6 +59,7 @@ pub fn compile_term<'a>(
         .unwrap()
         .next()
         .unwrap();
+    println!("{parse_result:?}");
 
     compile_pair(parse_result, env)
 }

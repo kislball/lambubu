@@ -11,7 +11,7 @@ Abstraction = {
 }
 
 Application = {
-    "(" ~ Term ~ Term ~ ")"
+    "(" ~ Term ~ Term+ ~ ")"
 }
 
 Parenthesized = _{
