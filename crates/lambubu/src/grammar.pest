@@ -18,7 +18,7 @@ Parenthesized = _{
     "(" ~ Term ~ ")"
 }
 
-Definition = ${ MacrosName ~ "::" ~ Term }
+Definition = { MacrosName ~ "::" ~ Term }
 
 Term = _{
     Abstraction
