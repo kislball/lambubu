@@ -41,14 +41,14 @@ impl ChurchEnvironment {
     }
 
     pub fn succ(&self) -> Term {
-        term!("\\n.\\f.\\x.(f ((n f) x))")
+        term!("\\n.\\f.\\x.(f (n f x))")
     }
 
     pub fn branch(&self) -> Term {
-        term!("\\f.\\a.\\b. ((f a) b)")
+        term!("\\f.\\a.\\b. (f a b)")
     }
 
     pub fn add(&self) -> Term {
-        term!("\\m.\\n.\\f.\\x.((n f) ((m f) x))")
+        term!("\\m.\\n.\\f.\\x.((n f) (m f x))")
     }
 }
