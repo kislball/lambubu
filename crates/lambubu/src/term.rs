@@ -1,5 +1,8 @@
 use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::rc::Rc;
+
+use crate::levels::BruijnLevelsTerm;
 
 const SYMBOL_LAMBDA: char = 'λ';
 
@@ -11,11 +14,17 @@ fn unwrap_rc(rc: Rc<Term>) -> Term {
     Rc::try_unwrap(rc).unwrap_or_else(|rc| (*rc).clone())
 }
 
-#[derive(Eq, PartialEq, Hash, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Term {
     Var(Rc<str>),
     Abs(Rc<str>, Rc<Term>),
     Apply(Rc<Term>, Rc<Term>),
+}
+
+impl Hash for Term {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        BruijnLevelsTerm::from(self.clone()).hash(state)
+    }
 }
 
 impl Display for Term {
@@ -72,15 +81,15 @@ impl Term {
         match self {
             Term::Var(name) if &*name == what => with,
             Term::Abs(variable, body) if &*variable != what => {
-                let (name, body) = if with.is_free_variable(&*variable) {
+                let (name, body) = if with.is_free_variable(&variable) {
                     let mut fresh: Rc<str> = variable.clone();
-                    while with.is_free_variable(&*fresh)
-                        || body.is_free_variable(&*fresh)
+                    while with.is_free_variable(&fresh)
+                        || body.is_free_variable(&fresh)
                         || &*fresh == what
                     {
-                        fresh = add_prime(&*fresh);
+                        fresh = add_prime(&fresh);
                     }
-                    let body = unwrap_rc(body).rename_free(&*variable, &*fresh);
+                    let body = unwrap_rc(body).rename_free(&variable, &fresh);
                     (fresh, body)
                 } else {
                     (variable, unwrap_rc(body))
@@ -113,7 +122,7 @@ impl Term {
     pub fn reduce_step_call_by_name(self) -> Self {
         match self {
             Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                Self::Abs(var, body) => unwrap_rc(body).substitute(&*var, unwrap_rc(t2)),
+                Self::Abs(var, body) => unwrap_rc(body).substitute(&var, unwrap_rc(t2)),
                 other => Self::Apply(Rc::new(other.reduce_step_call_by_name()), t2),
             },
             _ => self,
@@ -123,7 +132,7 @@ impl Term {
     pub fn reduce_step_normal_order(self) -> Self {
         match self {
             Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                Self::Abs(name, body) => unwrap_rc(body).substitute(&*name, unwrap_rc(t2)),
+                Self::Abs(name, body) => unwrap_rc(body).substitute(&name, unwrap_rc(t2)),
                 other if !other.is_normal_form() => {
                     Self::Apply(Rc::new(other.reduce_step_normal_order()), t2)
                 }
@@ -146,7 +155,7 @@ impl Term {
                 let t1_inner = unwrap_rc(t1);
                 if let Self::Abs(t1_name, t1_body) = t1_inner {
                     if t2.is_value() {
-                        unwrap_rc(t1_body).substitute(&*t1_name, unwrap_rc(t2))
+                        unwrap_rc(t1_body).substitute(&t1_name, unwrap_rc(t2))
                     } else {
                         Self::Apply(
                             Rc::new(Self::Abs(t1_name, t1_body)),
@@ -169,7 +178,7 @@ impl Term {
                     Self::Apply(t1, Rc::new(unwrap_rc(t2).reduce_step_applicative_order()))
                 } else {
                     match unwrap_rc(t1) {
-                        Self::Abs(name, body) => unwrap_rc(body).substitute(&*name, unwrap_rc(t2)),
+                        Self::Abs(name, body) => unwrap_rc(body).substitute(&name, unwrap_rc(t2)),
                         other => Self::Apply(Rc::new(other), t2),
                     }
                 }

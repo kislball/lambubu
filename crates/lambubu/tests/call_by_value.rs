@@ -1,3 +1,4 @@
+use lambubu::BruijnLevelsTerm;
 use lambubu::Term;
 
 fn reduce_to_fixed_point(mut t: Term) -> Term {
@@ -10,11 +11,34 @@ fn reduce_to_fixed_point(mut t: Term) -> Term {
     }
 }
 
+fn bruijn_step(t: Term) -> Term {
+    let b = BruijnLevelsTerm::from_open_term(t);
+    Term::from((*b.reduce_step_call_by_value()).clone())
+}
+
+fn bruijn_reduce_to_fixed_point(t: Term) -> Term {
+    let mut b = BruijnLevelsTerm::from_open_term(t);
+    loop {
+        let next = b.clone().reduce_step_call_by_value();
+        if *next == *b {
+            break;
+        }
+        b = next;
+    }
+    Term::from((*b).clone())
+}
+
 // (λx.x) a →_cbv a
 #[test]
 fn cbv_basic_beta() {
     let term = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
     assert_eq!(term.reduce_step_call_by_value(), Term::var("a"));
+}
+
+#[test]
+fn bruijn_cbv_basic_beta() {
+    let term = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
+    assert_eq!(bruijn_step(term), Term::var("a"));
 }
 
 // λz.(λx.x) a →_cbv λz.(λx.x) a  (weak: does NOT reduce under λ)
@@ -23,6 +47,13 @@ fn cbv_does_not_reduce_under_lambda() {
     let inner = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
     let term = Term::abs("z", inner.clone());
     assert_eq!(term.reduce_step_call_by_value(), Term::abs("z", inner));
+}
+
+#[test]
+fn bruijn_cbv_does_not_reduce_under_lambda() {
+    let inner = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
+    let term = Term::abs("z", inner.clone());
+    assert_eq!(bruijn_step(term), Term::abs("z", inner));
 }
 
 // (λx.x x) ((λy.y) a) →_cbv (λx.x x) a →_cbv (a a)
@@ -46,6 +77,23 @@ fn cbv_reduces_argument_before_substitution() {
     );
 }
 
+#[test]
+fn bruijn_cbv_reduces_argument_before_substitution() {
+    let term = Term::app(
+        Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
+        Term::app(Term::abs("y", Term::var("y")), Term::var("a")),
+    );
+    let step1 = Term::app(
+        Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
+        Term::var("a"),
+    );
+    assert_eq!(bruijn_step(term), step1);
+    assert_eq!(
+        bruijn_step(step1),
+        Term::app(Term::var("a"), Term::var("a"))
+    );
+}
+
 // (λx.λy.x) a b →*_cbv a  (K combinator)
 #[test]
 fn cbv_full_k_combinator() {
@@ -57,6 +105,18 @@ fn cbv_full_k_combinator() {
         Term::var("b"),
     );
     assert_eq!(reduce_to_fixed_point(term), Term::var("a"));
+}
+
+#[test]
+fn bruijn_cbv_full_k_combinator() {
+    let term = Term::app(
+        Term::app(
+            Term::abs("x", Term::abs("y", Term::var("x"))),
+            Term::var("a"),
+        ),
+        Term::var("b"),
+    );
+    assert_eq!(bruijn_reduce_to_fixed_point(term), Term::var("a"));
 }
 
 // (λf.λx.f (f x)) (λy.y) →*_cbv λx.(λy.y) ((λy.y) x)
@@ -74,4 +134,19 @@ fn cbv_stops_at_weak_normal_form() {
     let term = Term::app(church_2, id.clone());
     let expected = Term::abs("x", Term::app(id.clone(), Term::app(id, Term::var("x"))));
     assert_eq!(reduce_to_fixed_point(term), expected);
+}
+
+#[test]
+fn bruijn_cbv_stops_at_weak_normal_form() {
+    let id = Term::abs("y", Term::var("y"));
+    let church_2 = Term::abs(
+        "f",
+        Term::abs(
+            "x",
+            Term::app(Term::var("f"), Term::app(Term::var("f"), Term::var("x"))),
+        ),
+    );
+    let term = Term::app(church_2, id.clone());
+    let expected = Term::abs("x", Term::app(id.clone(), Term::app(id, Term::var("x"))));
+    assert_eq!(bruijn_reduce_to_fixed_point(term), expected);
 }

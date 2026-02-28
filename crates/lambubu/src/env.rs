@@ -59,10 +59,9 @@ impl CompoundEnvironment {
 
 impl TermEnvironment for CompoundEnvironment {
     fn resolve_term(&self, name: &str) -> Option<Term> {
-        self.terms.get(name).cloned().or(self
-            .envs
-            .iter()
-            .filter_map(|x| x.resolve_term(name))
-            .next())
+        self.terms
+            .get(name)
+            .cloned()
+            .or_else(|| self.envs.iter().find_map(|x| x.resolve_term(name)))
     }
 }
