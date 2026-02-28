@@ -133,7 +133,10 @@ fn bruijn_no_full_church_2_applied_to_id() {
         ),
     );
     let term = Term::app(church_2, id);
-    assert_eq!(bruijn_reduce_to_normal(term), Term::abs("x", Term::var("x")));
+    assert_eq!(
+        bruijn_reduce_to_normal(term),
+        Term::abs("x", Term::var("x"))
+    );
 }
 
 // (x) ((\y.y) z)

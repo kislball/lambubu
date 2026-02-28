@@ -8,7 +8,8 @@ fn round_trip(t: Term) -> Term {
 // x[x := y] = y
 #[test]
 fn subst_var_hit() {
-    let result = Term::Var(::std::rc::Rc::from("x")).substitute("x", Term::Var(::std::rc::Rc::from("y")));
+    let result =
+        Term::Var(::std::rc::Rc::from("x")).substitute("x", Term::Var(::std::rc::Rc::from("y")));
     assert_eq!(result, Term::Var(::std::rc::Rc::from("y")));
 }
 
@@ -21,7 +22,8 @@ fn conversion_subst_var_hit() {
 // z[x := y] = z
 #[test]
 fn subst_var_miss() {
-    let result = Term::Var(::std::rc::Rc::from("z")).substitute("x", Term::Var(::std::rc::Rc::from("y")));
+    let result =
+        Term::Var(::std::rc::Rc::from("z")).substitute("x", Term::Var(::std::rc::Rc::from("y")));
     assert_eq!(result, Term::Var(::std::rc::Rc::from("z")));
 }
 
@@ -33,11 +35,17 @@ fn conversion_subst_var_miss() {
 // (λx.x)[x := y] = λx.x
 #[test]
 fn subst_bound_variable_no_effect() {
-    let term = Term::Abs(::std::rc::Rc::from("x"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("x"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
     let result = term.substitute("x", Term::Var(::std::rc::Rc::from("y")));
     assert_eq!(
         result,
-        Term::Abs(::std::rc::Rc::from("x"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))))
+        Term::Abs(
+            ::std::rc::Rc::from("x"),
+            ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x")))
+        )
     );
 }
 
@@ -50,11 +58,17 @@ fn conversion_subst_bound_variable_no_effect() {
 // (λy.x)[x := y] = λy'.y
 #[test]
 fn subst_capture_avoiding() {
-    let term = Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("y"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
     let result = term.substitute("x", Term::Var(::std::rc::Rc::from("y")));
     assert_eq!(
         result,
-        Term::Abs(::std::rc::Rc::from("y'"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y"))))
+        Term::Abs(
+            ::std::rc::Rc::from("y'"),
+            ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y")))
+        )
     );
 }
 
@@ -69,11 +83,17 @@ fn conversion_subst_capture_avoiding() {
 // (λy.x)[x := y'] = λy.y'
 #[test]
 fn subst_capture_avoiding_already_primed() {
-    let term = Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("y"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
     let result = term.substitute("x", Term::Var(::std::rc::Rc::from("y'")));
     assert_eq!(
         result,
-        Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y'"))))
+        Term::Abs(
+            ::std::rc::Rc::from("y"),
+            ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y'")))
+        )
     );
 }
 
@@ -117,11 +137,17 @@ fn conversion_subst_capture_avoiding_double_prime() {
 // (λx.x)[y := z] = λx.x
 #[test]
 fn subst_irrelevant() {
-    let term = Term::Abs(::std::rc::Rc::from("x"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("x"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
     let result = term.substitute("y", Term::Var(::std::rc::Rc::from("z")));
     assert_eq!(
         result,
-        Term::Abs(::std::rc::Rc::from("x"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))))
+        Term::Abs(
+            ::std::rc::Rc::from("x"),
+            ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x")))
+        )
     );
 }
 
@@ -134,11 +160,17 @@ fn conversion_subst_irrelevant() {
 // (λz.x)[x := y] = λz.y
 #[test]
 fn subst_under_abs_no_capture() {
-    let term = Term::Abs(::std::rc::Rc::from("z"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("z"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
     let result = term.substitute("x", Term::Var(::std::rc::Rc::from("y")));
     assert_eq!(
         result,
-        Term::Abs(::std::rc::Rc::from("z"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y"))))
+        Term::Abs(
+            ::std::rc::Rc::from("z"),
+            ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y")))
+        )
     );
 }
 
@@ -187,7 +219,10 @@ fn subst_apply_both_sides() {
         ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y"))),
     );
     let result = term.substitute("x", with.clone());
-    assert_eq!(result, Term::Apply(::std::rc::Rc::new(with.clone()), ::std::rc::Rc::new(with)));
+    assert_eq!(
+        result,
+        Term::Apply(::std::rc::Rc::new(with.clone()), ::std::rc::Rc::new(with))
+    );
 }
 
 #[test]
@@ -264,10 +299,19 @@ fn conversion_subst_binder_and_body_both_affected() {
 // (λy.x)[x := λy.y] = λy.λy.y
 #[test]
 fn subst_with_is_abs_clashing_binder() {
-    let term = Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))));
-    let with = Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y"))));
+    let term = Term::Abs(
+        ::std::rc::Rc::from("y"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("x"))),
+    );
+    let with = Term::Abs(
+        ::std::rc::Rc::from("y"),
+        ::std::rc::Rc::new(Term::Var(::std::rc::Rc::from("y"))),
+    );
     let result = term.substitute("x", with.clone());
-    assert_eq!(result, Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(with)));
+    assert_eq!(
+        result,
+        Term::Abs(::std::rc::Rc::from("y"), ::std::rc::Rc::new(with))
+    );
 }
 
 #[test]

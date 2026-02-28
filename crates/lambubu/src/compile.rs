@@ -2,9 +2,9 @@ use crate::{
     Term,
     env::{MutableTermEnvironment, TermEnvironment},
 };
-use std::rc::Rc;
 use pest::{Parser, Span};
 use pest_derive::Parser;
+use std::rc::Rc;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]

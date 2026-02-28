@@ -1,5 +1,8 @@
 use crate::Term;
-use std::{collections::{HashMap, HashSet}, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum BruijnLevelsTerm {
