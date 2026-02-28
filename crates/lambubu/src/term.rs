@@ -2,10 +2,6 @@ use std::fmt::{self, Display, Formatter};
 
 const SYMBOL_LAMBDA: char = 'λ';
 
-fn add_prime(s: &str) -> String {
-    format!("{s}'")
-}
-
 #[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub enum Term {
     Var(String),
@@ -73,7 +69,7 @@ impl Term {
                         || body.is_free_variable(&fresh)
                         || fresh == *what
                     {
-                        fresh = add_prime(&fresh);
+                        fresh.push('\'');
                     }
                     let body = body.rename_free(&variable, &fresh);
 
