@@ -24,7 +24,7 @@ pub fn term(input: TokenStream) -> TokenStream {
     let lit = parse_macro_input!(input as LitStr);
     let s = lit.value();
 
-    let compiled = match compile_term(&s, &mut CompoundEnvironment::new(vec![])) {
+    let compiled = match compile_term(&s, &CompoundEnvironment::new(vec![])) {
         Ok(term) => term,
         Err(_) => {
             return syn::Error::new(lit.span(), String::from("Invalid term"))

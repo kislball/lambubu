@@ -18,6 +18,8 @@ Parenthesized = _{
     "(" ~ Term ~ ")"
 }
 
+Definition = ${ MacrosName ~ "::" ~ Term }
+
 Term = _{
     Abstraction
   | Variable
@@ -26,4 +28,4 @@ Term = _{
   | MacrosName
 }
 
-File = _{ SOI ~ Term ~ EOI }
+File = _{ SOI ~ (Definition | Term)* ~ EOI }
