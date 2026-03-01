@@ -16,10 +16,10 @@ fn bruijn_step(t: Term) -> Term {
 fn bruijn_reduce_to_normal(t: Term) -> Term {
     let mut b = BruijnLevelsTerm::from_open_term(t);
     loop {
-        if b.is_normal_form() {
+        if b.clone().is_normal_form() {
             break;
         }
-        b = b.reduce_step_normal_order();
+        b = b.clone().reduce_step_normal_order();
     }
     Term::from((*b).clone())
 }
