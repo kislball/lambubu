@@ -73,7 +73,15 @@ pub fn compile_file<'a>(
     input: &'a str,
     env: &mut impl MutableTermEnvironment,
 ) -> Result<Vec<Term>, CompilationError<'a>> {
-    let parse_result = LambdaParser::parse(Rule::File, input).unwrap();
+    let parse_result = LambdaParser::parse(Rule::File, input);
+    let parse_result = match parse_result {
+        Ok(e) => e,
+        Err(e) => {
+            dbg!(&e);
+            eprintln!("{e}");
+            panic!("dead xd)");
+        }
+    };
     let mut result = Vec::new();
 
     for pair in parse_result {
