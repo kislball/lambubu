@@ -2,7 +2,10 @@ use crate::{
     Term,
     env::{MutableTermEnvironment, TermEnvironment},
 };
-use pest::{Parser, Span};
+use pest::{
+    Parser, Span,
+    error::{Error, LineColLocation},
+};
 use pest_derive::Parser;
 use std::rc::Rc;
 
@@ -16,6 +19,41 @@ pub enum CompilationError<'a> {
     UnknownMacros { macro_name: String, span: Span<'a> },
     #[error("Unexpected definition at {0:?}")]
     UnexpectedDefinition(Span<'a>),
+    #[error("Parsing error")]
+    ParsingError(&'a str, Error<Rule>),
+}
+
+impl<'a> Into<LineColLocation> for CompilationError<'a> {
+    fn into(self) -> LineColLocation {
+        match self {
+            Self::UnknownMacros { span, .. } | Self::UnexpectedDefinition(span) => {
+                LineColLocation::from(span)
+            }
+            Self::ParsingError(_, e) => e.line_col,
+        }
+    }
+}
+
+impl<'a> CompilationError<'a> {
+    pub fn get_input(&self) -> &'a str {
+        match self {
+            Self::UnknownMacros { span, .. } | Self::UnexpectedDefinition(span) => span.get_input(),
+            Self::ParsingError(e, _) => e,
+        }
+    }
+
+    pub fn line_col(&self) -> LineColLocation {
+        self.clone().into()
+    }
+
+    pub fn get_context(&self) -> String {
+        match self {
+            Self::ParsingError(_, e) => e.line().into(),
+            Self::UnknownMacros { span, .. } | Self::UnexpectedDefinition(span) => {
+                span.lines().collect::<Vec<_>>().join("\n")
+            }
+        }
+    }
 }
 
 type Pair<'a> = pest::iterators::Pair<'a, Rule>;
@@ -73,15 +111,8 @@ pub fn compile_file<'a>(
     input: &'a str,
     env: &mut impl MutableTermEnvironment,
 ) -> Result<Vec<Term>, CompilationError<'a>> {
-    let parse_result = LambdaParser::parse(Rule::File, input);
-    let parse_result = match parse_result {
-        Ok(e) => e,
-        Err(e) => {
-            dbg!(&e);
-            eprintln!("{e}");
-            panic!("dead xd)");
-        }
-    };
+    let parse_result = LambdaParser::parse(Rule::File, input)
+        .map_err(|x| CompilationError::ParsingError(input, x))?;
     let mut result = Vec::new();
 
     for pair in parse_result {
