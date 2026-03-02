@@ -64,8 +64,6 @@ fn bruijn_ao_reduces_under_lambda() {
 }
 
 // (λx.x x) ((λy.y) a) →_ao (a a)
-// Argument (λy.y) a is reduced to a before substitution.
-// Call-by-name would give ((λy.y) a) ((λy.y) a) instead.
 #[test]
 fn ao_reduces_argument_before_substitution() {
     let term = Term::app(

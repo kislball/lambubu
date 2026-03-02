@@ -13,8 +13,6 @@ fn levels(t: Term) -> BruijnLevelsTerm {
     BruijnLevelsTerm::from(t)
 }
 
-// --- equality ---
-
 #[test]
 fn alpha_eq_identity_different_names() {
     // λx.x == λy.y
@@ -63,8 +61,6 @@ fn alpha_neq_different_structure() {
     assert_ne!(lhs, rhs);
 }
 
-// --- hashing ---
-
 #[test]
 fn hash_eq_alpha_equivalent_terms() {
     let a = levels(Term::abs("x", Term::var("x")));
@@ -104,8 +100,6 @@ fn hashset_keeps_structurally_distinct_terms() {
     set.insert(levels(Term::abs("a", Term::var("a")))); // duplicate of λx.x
     assert_eq!(set.len(), 3);
 }
-
-// --- Term::hash (goes via BruijnLevelsTerm) ---
 
 #[test]
 fn term_hash_alpha_equivalent() {

@@ -57,7 +57,6 @@ fn bruijn_cbn_does_not_reduce_under_lambda() {
 }
 
 // (λx.x x) ((λy.y) a) →_cbn ((λy.y) a) ((λy.y) a)
-// Argument is substituted unreduced, unlike applicative order / call-by-value.
 #[test]
 fn cbn_does_not_reduce_argument() {
     let arg = Term::app(Term::abs("y", Term::var("y")), Term::var("a"));
@@ -111,7 +110,6 @@ fn bruijn_cbn_full_k_combinator() {
 }
 
 // (λf.λx.f (f x)) (λy.y) →*_cbn λx.(λy.y) ((λy.y) x)
-// CBN does not reduce under λ so it stops short of full normal form.
 #[test]
 fn cbn_stops_at_weak_head_normal_form() {
     let id = Term::abs("y", Term::var("y"));

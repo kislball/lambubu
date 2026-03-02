@@ -92,18 +92,26 @@ fn levels_k_combinator() {
 }
 
 #[test]
-fn open_term_free_var_levels() {
-    let t = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
-    let b = BruijnLevelsTerm::from_open_term(t);
+fn levels_sibling_abstractions() {
+    // (λx.x) (λy.y)
+    let t = Term::app(
+        Term::abs("x", Term::var("x")),
+        Term::abs("y", Term::var("y")),
+    );
+    let b = BruijnLevelsTerm::from(t);
     assert_eq!(
-        *b,
+        b,
         BruijnLevelsTerm::Apply(
             std::rc::Rc::new(BruijnLevelsTerm::Abs(
-                1,
-                std::rc::Rc::new(BruijnLevelsTerm::Var(1, "x".into())),
+                0,
+                std::rc::Rc::new(BruijnLevelsTerm::Var(0, "x".into())),
                 "x".into(),
             )),
-            std::rc::Rc::new(BruijnLevelsTerm::Var(0, "a".into())),
+            std::rc::Rc::new(BruijnLevelsTerm::Abs(
+                0,
+                std::rc::Rc::new(BruijnLevelsTerm::Var(0, "y".into())),
+                "y".into(),
+            )),
         )
     );
 }

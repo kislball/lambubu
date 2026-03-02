@@ -59,15 +59,13 @@ impl From<BruijnLevelsTerm> for Term {
 
 impl From<Term> for BruijnLevelsTerm {
     fn from(value: Term) -> Self {
-        let mut counter = 0;
-        (*BruijnLevelsTerm::from_term(Rc::new(value), &HashMap::new(), &mut counter)).clone()
+        (*BruijnLevelsTerm::from_term(Rc::new(value), &HashMap::new(), 0)).clone()
     }
 }
 
 impl From<Rc<Term>> for BruijnLevelsTerm {
     fn from(value: Rc<Term>) -> Self {
-        let mut counter = 0;
-        (*BruijnLevelsTerm::from_term(value, &HashMap::new(), &mut counter)).clone()
+        (*BruijnLevelsTerm::from_term(value, &HashMap::new(), 0)).clone()
     }
 }
 
@@ -79,8 +77,8 @@ impl BruijnLevelsTerm {
         for (i, v) in free_vars.iter().enumerate() {
             dict.insert(v.clone(), i as u16);
         }
-        let mut counter = free_vars.len() as u16;
-        Self::from_term(Rc::new(term), &dict, &mut counter)
+        let counter = free_vars.len() as u16;
+        Self::from_term(Rc::new(term), &dict, counter)
     }
 
     fn collect_free_vars(term: &Term, bound: &HashSet<String>, free: &mut Vec<String>) {
@@ -106,7 +104,7 @@ impl BruijnLevelsTerm {
     fn from_term(
         term: Rc<Term>,
         dictionary: &HashMap<String, u16>,
-        counter: &mut u16,
+        counter: u16,
     ) -> Rc<BruijnLevelsTerm> {
         match term.as_ref() {
             Term::Var(name) => Rc::new(BruijnLevelsTerm::Var(
@@ -114,13 +112,12 @@ impl BruijnLevelsTerm {
                 name.clone(),
             )),
             Term::Abs(name, body) => {
-                let current_level = *counter;
-                *counter += 1;
+                let current_level = counter;
                 let mut new_hash = dictionary.clone();
                 new_hash.insert(name.to_string(), current_level);
                 Rc::new(BruijnLevelsTerm::Abs(
                     current_level,
-                    Self::from_term(body.clone(), &new_hash, counter),
+                    Self::from_term(body.clone(), &new_hash, current_level + 1),
                     name.clone(),
                 ))
             }
@@ -139,10 +136,10 @@ impl BruijnLevelsTerm {
     ) -> Rc<BruijnLevelsTerm> {
         match self.as_ref() {
             BruijnLevelsTerm::Var(val, _) if *val == what => with,
-            BruijnLevelsTerm::Abs(lvl, body, name) => {
+            BruijnLevelsTerm::Abs(lvl, body, name) if *lvl != what => {
                 let new_body = Self::substitute(body.clone(), what, with);
                 if Rc::ptr_eq(&new_body, body) {
-                    self
+                    self.clone()
                 } else {
                     Rc::new(BruijnLevelsTerm::Abs(*lvl, new_body, name.clone()))
                 }
