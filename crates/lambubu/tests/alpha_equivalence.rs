@@ -18,7 +18,10 @@ fn levels(t: Term) -> BruijnLevelsTerm {
 #[test]
 fn alpha_eq_identity_different_names() {
     // λx.x == λy.y
-    assert_eq!(levels(Term::abs("x", Term::var("x"))), levels(Term::abs("y", Term::var("y"))));
+    assert_eq!(
+        levels(Term::abs("x", Term::var("x"))),
+        levels(Term::abs("y", Term::var("y")))
+    );
 }
 
 #[test]
@@ -43,7 +46,10 @@ fn alpha_eq_church_2_different_names() {
     let mk = |f: &str, x: &str| {
         levels(Term::abs(
             f,
-            Term::abs(x, Term::app(Term::var(f), Term::app(Term::var(f), Term::var(x)))),
+            Term::abs(
+                x,
+                Term::app(Term::var(f), Term::app(Term::var(f), Term::var(x))),
+            ),
         ))
     };
     assert_eq!(mk("f", "x"), mk("g", "y"));
@@ -92,10 +98,10 @@ fn hashset_deduplicates_alpha_equivalent_terms() {
 #[test]
 fn hashset_keeps_structurally_distinct_terms() {
     let mut set: HashSet<BruijnLevelsTerm> = HashSet::new();
-    set.insert(levels(Term::abs("x", Term::var("x"))));                          // λx.x
-    set.insert(levels(Term::abs("x", Term::abs("y", Term::var("x")))));          // λx.λy.x
-    set.insert(levels(Term::abs("x", Term::abs("y", Term::var("y")))));          // λx.λy.y
-    set.insert(levels(Term::abs("a", Term::var("a"))));                          // duplicate of λx.x
+    set.insert(levels(Term::abs("x", Term::var("x")))); // λx.x
+    set.insert(levels(Term::abs("x", Term::abs("y", Term::var("x"))))); // λx.λy.x
+    set.insert(levels(Term::abs("x", Term::abs("y", Term::var("y"))))); // λx.λy.y
+    set.insert(levels(Term::abs("a", Term::var("a")))); // duplicate of λx.x
     assert_eq!(set.len(), 3);
 }
 

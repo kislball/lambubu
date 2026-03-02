@@ -1,5 +1,5 @@
 use clap::Parser;
-use lambubu::{compile::compile_file, BruijnLevelsTerm, CompoundEnvironment, Term};
+use lambubu::{BruijnLevelsTerm, CompoundEnvironment, Term, compile::compile_file};
 use lambubu_church::ChurchEnvironment;
 use std::{
     io::{self, Read},
