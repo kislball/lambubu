@@ -23,13 +23,12 @@ pub enum CompilationError<'a> {
     ParsingError(&'a str, Box<Error<Rule>>),
 }
 
-impl<'a> Into<LineColLocation> for CompilationError<'a> {
-    fn into(self) -> LineColLocation {
-        match self {
-            Self::UnknownMacros { span, .. } | Self::UnexpectedDefinition(span) => {
-                LineColLocation::from(span)
-            }
-            Self::ParsingError(_, e) => e.line_col,
+impl<'a> From<CompilationError<'a>> for LineColLocation {
+    fn from(val: CompilationError<'a>) -> LineColLocation {
+        match val {
+            CompilationError::UnknownMacros { span, .. }
+            | CompilationError::UnexpectedDefinition(span) => LineColLocation::from(span),
+            CompilationError::ParsingError(_, e) => e.line_col,
         }
     }
 }
