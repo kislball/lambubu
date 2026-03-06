@@ -46,7 +46,7 @@ impl Reducer {
     fn substitute_inner(
         &self,
         term: Rc<BruijnLevelsTerm>,
-        what: u16,
+        what: usize,
         with: Rc<BruijnLevelsTerm>,
         #[cfg(feature = "cache")] cache: &mut HashMap<
             ByAddress<BruijnLevelsTerm>,
@@ -126,7 +126,7 @@ impl Reducer {
     pub fn substitute(
         &self,
         term: Rc<BruijnLevelsTerm>,
-        what: u16,
+        what: usize,
         with: Rc<BruijnLevelsTerm>,
     ) -> Rc<BruijnLevelsTerm> {
         self.substitute_inner(

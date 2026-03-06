@@ -2,7 +2,7 @@ use lambubu::BruijnLevelsTerm;
 use lambubu::Term;
 
 fn round_trip(t: Term) -> Term {
-    Term::from((*BruijnLevelsTerm::from_open_term(t)).clone())
+    Term::from(BruijnLevelsTerm::from_open_term(t))
 }
 
 // x[x := y] = y
@@ -316,8 +316,9 @@ fn subst_with_is_abs_clashing_binder() {
 
 #[test]
 fn conversion_subst_with_is_abs_clashing_binder() {
-    let result = Term::abs("y", Term::abs("y", Term::var("y")));
-    assert_eq!(round_trip(result.clone()), result);
+    let input = Term::abs("y", Term::abs("y", Term::var("y")));
+    let expected = Term::abs("y", Term::abs("y'", Term::var("y'")));
+    assert_eq!(round_trip(input.clone()), expected);
 }
 
 // ((λx.x) z)[z := w] = ((λx.x) w)

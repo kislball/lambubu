@@ -10,11 +10,11 @@ fn test_bruijn_subst_shadowing() {
     ));
 
     let replacement = Rc::new(BruijnLevelsTerm::Var(100, "y".into()));
-    let result = term.substitute(0, replacement.clone());
+    let result = (*term).clone().substitute(0, replacement.clone());
 
-    match result.as_ref() {
+    match result {
         BruijnLevelsTerm::Abs(lvl, body, _) => {
-            assert_eq!(*lvl, 0);
+            assert_eq!(lvl, 0);
             match body.as_ref() {
                 BruijnLevelsTerm::Var(v_lvl, _) => {
                     assert_eq!(
@@ -44,9 +44,9 @@ fn test_bruijn_nested_term_shadowing() {
 
     let replacement = Rc::new(BruijnLevelsTerm::Var(99, "z".into()));
 
-    let result = body.substitute(0, replacement.clone());
+    let result = (*body).clone().substitute(0, replacement.clone());
 
-    match result.as_ref() {
+    match result {
         BruijnLevelsTerm::Apply(a, b) => {
             match a.as_ref() {
                 BruijnLevelsTerm::Var(l, _) => {

@@ -31,9 +31,9 @@ impl ChurchEnvironment {
     }
 
     pub fn numeral(&self, number: u32) -> Term {
-        let mut num = Term::app(Term::var("f"), Term::var("x"));
+        let mut num = Term::var("x");
 
-        for _ in 1..number {
+        for _ in 0..number {
             num = Term::app(Term::var("f"), num)
         }
 

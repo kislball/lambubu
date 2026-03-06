@@ -13,19 +13,19 @@ fn reduce_to_fixed_point(mut t: Term) -> Term {
 
 fn bruijn_step(t: Term) -> Term {
     let b = BruijnLevelsTerm::from_open_term(t);
-    Term::from((*b.reduce_step_call_by_name()).clone())
+    Term::from(b.reduce_step_call_by_name())
 }
 
 fn bruijn_reduce_to_fixed_point(t: Term) -> Term {
     let mut b = BruijnLevelsTerm::from_open_term(t);
     loop {
         let next = b.clone().reduce_step_call_by_name();
-        if *next == *b {
+        if next == b {
             break;
         }
         b = next;
     }
-    Term::from((*b).clone())
+    Term::from(b)
 }
 
 // (λx.x) a →_cbn a

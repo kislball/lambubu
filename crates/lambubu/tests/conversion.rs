@@ -2,14 +2,14 @@ use lambubu::BruijnLevelsTerm;
 use lambubu::Term;
 
 fn round_trip(t: Term) -> Term {
-    Term::from((*BruijnLevelsTerm::from_open_term(t)).clone())
+    Term::from(BruijnLevelsTerm::from_open_term(t))
 }
 
 #[test]
 fn closed_term_from_agrees_with_open() {
     let id = Term::abs("x", Term::var("x"));
     let via_from = Term::from(BruijnLevelsTerm::from(id.clone()));
-    let via_open = Term::from((*BruijnLevelsTerm::from_open_term(id)).clone());
+    let via_open = Term::from(BruijnLevelsTerm::from_open_term(id));
     assert_eq!(via_from, via_open);
 }
 
@@ -108,8 +108,8 @@ fn levels_sibling_abstractions() {
                 "x".into(),
             )),
             std::rc::Rc::new(BruijnLevelsTerm::Abs(
-                0,
-                std::rc::Rc::new(BruijnLevelsTerm::Var(0, "y".into())),
+                1,
+                std::rc::Rc::new(BruijnLevelsTerm::Var(1, "y".into())),
                 "y".into(),
             )),
         )
