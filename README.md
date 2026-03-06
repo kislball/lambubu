@@ -1,0 +1,43 @@
+# Lambubu
+Lambda caclulus redex reducer.
+
+## Building
+```sh
+$ cargo build --release
+```
+
+## Running
+```sh
+cargo install --path ./crates/lambubu_cli/ # install globally
+cargo run # run using Cargo
+```
+
+## Usage
+Lambubu CLI accepts its input via standard input. Input is a series of two kinds of statements:
+
+1. Lambda expressions
+```
+(\x.x)
+(,\x.x)
+(λx.x)
+
+((\a.\b.a) 2 5)
+```
+2. Definitions
+```
+TWO::(ADD 1 1)
+```
+
+Definitions are added to the context line-by-line and lambda expressions are reduced using the stretegy requested.
+Each line corresponds to a single expression.
+
+### Lambda syntax
+Expression is any of the following:
+1. A lambda term `(\X.Y)`, where `X` is any variable name(lowercase) and `Y` is any expression
+2. A variable `a`, where `a` is a sequence of lowercase characters
+3. A macro `A`, where `A` is a sequence of uppercase characters
+4. Application `(A B)`, where `A` is an expression and `B` is one or more expressions.
+5. Another expression in parenthesis
+
+## Licensing
+See LICENSE for details
