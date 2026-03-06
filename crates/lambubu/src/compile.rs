@@ -20,7 +20,7 @@ pub enum CompilationError<'a> {
     #[error("Unexpected definition at {0:?}")]
     UnexpectedDefinition(Span<'a>),
     #[error("Parsing error")]
-    ParsingError(&'a str, Error<Rule>),
+    ParsingError(&'a str, Box<Error<Rule>>),
 }
 
 impl<'a> Into<LineColLocation> for CompilationError<'a> {
@@ -112,7 +112,7 @@ pub fn compile_file<'a>(
     env: &mut impl MutableTermEnvironment,
 ) -> Result<Vec<Term>, CompilationError<'a>> {
     let parse_result = LambdaParser::parse(Rule::File, input)
-        .map_err(|x| CompilationError::ParsingError(input, x))?;
+        .map_err(|x| CompilationError::ParsingError(input, Box::new(x)))?;
     let mut result = Vec::new();
 
     for pair in parse_result {
