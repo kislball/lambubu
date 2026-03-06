@@ -10,7 +10,7 @@ pub struct Options {
     bruijn: bool,
 }
 
-fn standard_environment() -> CompoundEnvironment {
+pub fn standard_environment() -> CompoundEnvironment {
     CompoundEnvironment::new(vec![Box::new(ChurchEnvironment)])
 }
 
