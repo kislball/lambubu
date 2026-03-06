@@ -185,78 +185,92 @@ impl BruijnLevelsTerm {
         }
     }
 
-    pub fn reduce_step_call_by_name(self) -> BruijnLevelsTerm {
+    pub fn reduce_step_call_by_name(self) -> (BruijnLevelsTerm, bool) {
         match self {
             Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                Self::Abs(lvl, body, _) => unwrap_rc(body).substitute(lvl, t2),
-                other => Self::Apply(Rc::new(other.reduce_step_call_by_name()), t2),
-            },
-            _ => self,
-        }
-    }
-
-    pub fn reduce_step_normal_order(self) -> BruijnLevelsTerm {
-        match self {
-            Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                Self::Abs(lvl, body, _) => unwrap_rc(body).substitute(lvl, t2),
-                other if !other.is_normal_form() => {
-                    Self::Apply(Rc::new(other.reduce_step_normal_order()), t2)
+                Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
+                other => {
+                    let (reduced, changed) = other.reduce_step_call_by_name();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 }
-                other => Self::Apply(
-                    Rc::new(other),
-                    Rc::new(unwrap_rc(t2).reduce_step_normal_order()),
-                ),
             },
-            Self::Abs(lvl, body, name) => Self::Abs(
-                lvl,
-                Rc::new(unwrap_rc(body).reduce_step_normal_order()),
-                name,
-            ),
-            _ => self,
+            _ => (self, false),
         }
     }
 
-    pub fn reduce_step_call_by_value(self) -> BruijnLevelsTerm {
+    pub fn reduce_step_normal_order(self) -> (BruijnLevelsTerm, bool) {
         match self {
-            Self::Var(_, _) | Self::Abs(_, _, _) => self,
+            Self::Apply(t1, t2) => match unwrap_rc(t1) {
+                Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
+                other if !other.is_normal_form() => {
+                    let (reduced, changed) = other.reduce_step_normal_order();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
+                }
+                other => {
+                    let (reduced, changed) = unwrap_rc(t2).reduce_step_normal_order();
+                    (
+                        Self::Apply(Rc::new(other), Rc::new(reduced)),
+                        changed,
+                    )
+                }
+            },
+            Self::Abs(lvl, body, name) => {
+                let (reduced, changed) = unwrap_rc(body).reduce_step_normal_order();
+                (Self::Abs(lvl, Rc::new(reduced), name), changed)
+            }
+            _ => (self, false),
+        }
+    }
+
+    pub fn reduce_step_call_by_value(self) -> (BruijnLevelsTerm, bool) {
+        match self {
+            Self::Var(_, _) | Self::Abs(_, _, _) => (self, false),
             Self::Apply(t1, t2) => {
                 let t1_inner = unwrap_rc(t1);
                 if let Self::Abs(lvl, body, name) = t1_inner {
                     if t2.is_value() {
-                        unwrap_rc(body).substitute(lvl, t2)
+                        (unwrap_rc(body).substitute(lvl, t2), true)
                     } else {
-                        Self::Apply(
-                            Rc::new(Self::Abs(lvl, body, name)),
-                            Rc::new(unwrap_rc(t2).reduce_step_call_by_value()),
+                        let (reduced, changed) = unwrap_rc(t2).reduce_step_call_by_value();
+                        (
+                            Self::Apply(
+                                Rc::new(Self::Abs(lvl, body, name)),
+                                Rc::new(reduced),
+                            ),
+                            changed,
                         )
                     }
                 } else {
-                    Self::Apply(Rc::new(t1_inner.reduce_step_call_by_value()), t2)
+                    let (reduced, changed) = t1_inner.reduce_step_call_by_value();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 }
             }
         }
     }
 
-    pub fn reduce_step_applicative_order(self) -> BruijnLevelsTerm {
+    pub fn reduce_step_applicative_order(self) -> (BruijnLevelsTerm, bool) {
         match self {
             Self::Apply(t1, t2) => {
                 if !t1.is_normal_form() {
-                    Self::Apply(Rc::new(unwrap_rc(t1).reduce_step_applicative_order()), t2)
+                    let (reduced, changed) = unwrap_rc(t1).reduce_step_applicative_order();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 } else if !t2.is_normal_form() {
-                    Self::Apply(t1, Rc::new(unwrap_rc(t2).reduce_step_applicative_order()))
+                    let (reduced, changed) = unwrap_rc(t2).reduce_step_applicative_order();
+                    (Self::Apply(t1, Rc::new(reduced)), changed)
                 } else {
                     match unwrap_rc(t1) {
-                        Self::Abs(lvl, body, _) => unwrap_rc(body).substitute(lvl, t2),
-                        other => Self::Apply(Rc::new(other), t2),
+                        Self::Abs(lvl, body, _) => {
+                            (unwrap_rc(body).substitute(lvl, t2), true)
+                        }
+                        other => (Self::Apply(Rc::new(other), t2), false),
                     }
                 }
             }
-            Self::Abs(lvl, body, name) => Self::Abs(
-                lvl,
-                Rc::new(unwrap_rc(body).reduce_step_applicative_order()),
-                name,
-            ),
-            _ => self,
+            Self::Abs(lvl, body, name) => {
+                let (reduced, changed) = unwrap_rc(body).reduce_step_applicative_order();
+                (Self::Abs(lvl, Rc::new(reduced), name), changed)
+            }
+            _ => (self, false),
         }
     }
 }

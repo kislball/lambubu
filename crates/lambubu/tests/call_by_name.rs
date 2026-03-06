@@ -3,27 +3,27 @@ use lambubu::Term;
 
 fn reduce_to_fixed_point(mut t: Term) -> Term {
     loop {
-        let next = t.clone().reduce_step_call_by_name();
-        if next == t {
+        let (next, changed) = t.reduce_step_call_by_name();
+        t = next;
+        if !changed {
             return t;
         }
-        t = next;
     }
 }
 
 fn bruijn_step(t: Term) -> Term {
     let b = BruijnLevelsTerm::from_open_term(t);
-    Term::from(b.reduce_step_call_by_name())
+    Term::from(b.reduce_step_call_by_name().0)
 }
 
 fn bruijn_reduce_to_fixed_point(t: Term) -> Term {
     let mut b = BruijnLevelsTerm::from_open_term(t);
     loop {
-        let next = b.clone().reduce_step_call_by_name();
-        if next == b {
+        let (next, changed) = b.reduce_step_call_by_name();
+        b = next;
+        if !changed {
             break;
         }
-        b = next;
     }
     Term::from(b)
 }
@@ -32,7 +32,7 @@ fn bruijn_reduce_to_fixed_point(t: Term) -> Term {
 #[test]
 fn cbn_basic_beta() {
     let term = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
-    assert_eq!(term.reduce_step_call_by_name(), Term::var("a"));
+    assert_eq!(term.reduce_step_call_by_name().0, Term::var("a"));
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn bruijn_cbn_basic_beta() {
 fn cbn_does_not_reduce_under_lambda() {
     let inner = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
     let term = Term::abs("z", inner.clone());
-    assert_eq!(term.reduce_step_call_by_name(), Term::abs("z", inner));
+    assert_eq!(term.reduce_step_call_by_name().0, Term::abs("z", inner));
 }
 
 #[test]
@@ -64,7 +64,7 @@ fn cbn_does_not_reduce_argument() {
         Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
         arg.clone(),
     );
-    assert_eq!(term.reduce_step_call_by_name(), Term::app(arg.clone(), arg));
+    assert_eq!(term.reduce_step_call_by_name().0, Term::app(arg.clone(), arg));
 }
 
 #[test]
@@ -89,10 +89,15 @@ fn cbn_full_k_combinator() {
     );
     assert_eq!(
         term.reduce_step_call_by_name()
+            .0
             .reduce_step_call_by_name()
+            .0
             .reduce_step_call_by_name()
+            .0
             .reduce_step_call_by_name()
-            .reduce_step_call_by_name(),
+            .0
+            .reduce_step_call_by_name()
+            .0,
         Term::var("a")
     );
 }

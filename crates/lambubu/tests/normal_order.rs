@@ -2,24 +2,29 @@ use lambubu::BruijnLevelsTerm;
 use lambubu::Term;
 
 fn reduce_to_normal(mut t: Term) -> Term {
-    while !t.is_normal_form() {
-        t = t.reduce_step_normal_order();
+    loop {
+        let (next, changed) = t.reduce_step_normal_order();
+        t = next;
+        if !changed {
+            break;
+        }
     }
     t
 }
 
 fn bruijn_step(t: Term) -> Term {
     let b = BruijnLevelsTerm::from_open_term(t);
-    Term::from(b.reduce_step_normal_order())
+    Term::from(b.reduce_step_normal_order().0)
 }
 
 fn bruijn_reduce_to_normal(t: Term) -> Term {
     let mut b = BruijnLevelsTerm::from_open_term(t);
     loop {
-        if b.is_normal_form() {
+        let (next, changed) = b.reduce_step_normal_order();
+        b = next;
+        if !changed {
             break;
         }
-        b = b.reduce_step_normal_order();
     }
     Term::from(b)
 }
@@ -28,7 +33,7 @@ fn bruijn_reduce_to_normal(t: Term) -> Term {
 #[test]
 fn no_basic_beta() {
     let term = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
-    assert_eq!(term.reduce_step_normal_order(), Term::var("a"));
+    assert_eq!(term.reduce_step_normal_order().0, Term::var("a"));
 }
 
 #[test]
@@ -45,7 +50,7 @@ fn no_reduces_under_lambda() {
         Term::app(Term::abs("x", Term::var("x")), Term::var("a")),
     );
     assert_eq!(
-        term.reduce_step_normal_order(),
+        term.reduce_step_normal_order().0,
         Term::abs("z", Term::var("a"))
     );
 }
@@ -68,7 +73,7 @@ fn no_does_not_reduce_argument_before_substitution() {
         Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
         arg.clone(),
     );
-    assert_eq!(term.reduce_step_normal_order(), Term::app(arg.clone(), arg));
+    assert_eq!(term.reduce_step_normal_order().0, Term::app(arg.clone(), arg));
 }
 
 #[test]

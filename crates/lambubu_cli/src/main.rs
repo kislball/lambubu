@@ -26,7 +26,7 @@ fn main() {
         if options.bruijn {
             let mut term = BruijnLevelsTerm::from_open_term(term);
             while !term.is_normal_form() {
-                term = term.reduce_step_applicative_order();
+                term = term.reduce_step_applicative_order().0;
                 steps += 1;
                 if steps >= MAX_STEPS {
                     eprintln!("max steps exceeded");
@@ -38,7 +38,7 @@ fn main() {
             println!("{num}. {term}", num = i + 1);
         } else {
             while !term.is_normal_form() {
-                term = term.reduce_step_applicative_order();
+                term = term.reduce_step_applicative_order().0;
                 steps += 1;
                 if steps >= MAX_STEPS {
                     eprintln!("max steps exceeded");

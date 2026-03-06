@@ -2,24 +2,29 @@ use lambubu::BruijnLevelsTerm;
 use lambubu::Term;
 
 fn reduce_to_normal(mut t: Term) -> Term {
-    while !t.is_normal_form() {
-        t = t.reduce_step_applicative_order();
+    loop {
+        let (next, changed) = t.reduce_step_applicative_order();
+        t = next;
+        if !changed {
+            break;
+        }
     }
     t
 }
 
 fn bruijn_step(t: Term) -> Term {
     let b = BruijnLevelsTerm::from_open_term(t);
-    Term::from(b.reduce_step_applicative_order())
+    Term::from(b.reduce_step_applicative_order().0)
 }
 
 fn bruijn_reduce_to_normal(t: Term) -> Term {
     let mut b = BruijnLevelsTerm::from_open_term(t);
     loop {
-        if b.is_normal_form() {
+        let (next, changed) = b.reduce_step_applicative_order();
+        b = next;
+        if !changed {
             break;
         }
-        b = b.reduce_step_applicative_order();
     }
     Term::from(b)
 }
@@ -28,7 +33,7 @@ fn bruijn_reduce_to_normal(t: Term) -> Term {
 #[test]
 fn ao_basic_beta() {
     let term = Term::app(Term::abs("x", Term::var("x")), Term::var("a"));
-    assert_eq!(term.reduce_step_applicative_order(), Term::var("a"));
+    assert_eq!(term.reduce_step_applicative_order().0, Term::var("a"));
 }
 
 #[test]
@@ -46,7 +51,9 @@ fn ao_reduces_under_lambda() {
     );
     assert_eq!(
         term.reduce_step_applicative_order()
-            .reduce_step_applicative_order(),
+            .0
+            .reduce_step_applicative_order()
+            .0,
         Term::abs("z", Term::var("a"))
     );
 }
@@ -72,7 +79,9 @@ fn ao_reduces_argument_before_substitution() {
     );
     assert_eq!(
         term.reduce_step_applicative_order()
-            .reduce_step_applicative_order(),
+            .0
+            .reduce_step_applicative_order()
+            .0,
         Term::app(Term::var("a"), Term::var("a"))
     );
 }

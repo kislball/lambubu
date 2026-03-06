@@ -12,8 +12,8 @@ fn bench_term_order<'a, M: Measurement>(
     group: &mut BenchmarkGroup<'a, M>,
     term_source: &str,
     strategy_name: &str,
-    standard_reducer: fn(Term) -> Term,
-    bruijn_reducer: fn(BruijnLevelsTerm) -> BruijnLevelsTerm,
+    standard_reducer: fn(Term) -> (Term, bool),
+    bruijn_reducer: fn(BruijnLevelsTerm) -> (BruijnLevelsTerm, bool),
 ) {
     let term = compile_term(term_source, &standard_environment()).unwrap();
     let bruijned: BruijnLevelsTerm = term.clone().into();
@@ -22,9 +22,9 @@ fn bench_term_order<'a, M: Measurement>(
         b.iter(|| {
             let mut bruijned = bruijned.clone();
             loop {
-                let previous = bruijned.clone();
-                bruijned = bruijn_reducer(bruijned.clone());
-                if previous == bruijned {
+                let (next, changed) = bruijn_reducer(bruijned);
+                bruijned = next;
+                if !changed {
                     break;
                 }
             }
@@ -35,9 +35,9 @@ fn bench_term_order<'a, M: Measurement>(
         b.iter(|| {
             let mut term = term.clone();
             loop {
-                let previous = term.clone();
-                term = standard_reducer(term.clone());
-                if previous == term {
+                let (next, changed) = standard_reducer(term);
+                term = next;
+                if !changed {
                     break;
                 }
             }
@@ -60,6 +60,22 @@ fn bench_term<'a, M: Measurement>(group: &mut BenchmarkGroup<'a, M>, term_source
         "Applicative order",
         Term::reduce_step_applicative_order,
         BruijnLevelsTerm::reduce_step_applicative_order,
+    );
+
+    bench_term_order(
+        group,
+        term_source,
+        "Call by name",
+        Term::reduce_step_call_by_name,
+        BruijnLevelsTerm::reduce_step_call_by_name,
+    );
+
+    bench_term_order(
+        group,
+        term_source,
+        "Call by value",
+        Term::reduce_step_call_by_value,
+        BruijnLevelsTerm::reduce_step_call_by_value,
     );
 }
 
