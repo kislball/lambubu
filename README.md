@@ -36,6 +36,8 @@ TWO::(ADD 1 1)
 Definitions are added to the context line-by-line and lambda expressions are reduced using the stretegy requested.
 Each line corresponds to a single expression.
 
+API documentation can be openned using `cargo doc --open`.
+
 ### Lambda syntax
 Expression is any of the following:
 1. A lambda term `(\X.Y)`, where `X` is any variable name(lowercase) and `Y` is any expression

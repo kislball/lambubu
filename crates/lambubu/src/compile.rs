@@ -1,5 +1,18 @@
-//! The module contains compilation/preprocessing utilities for Lambubu.
+//! Compilation and preprocessing utilities for Lambubu.
 //! It is responsible for parsing and preprocessing $\lambda$-expressions into [`crate::Term`].
+//!
+//!
+//! # Lambda syntax
+//! Expression is any of the following:
+//! 1. A lambda term `(\X.Y)`, where `X` is any variable name(lowercase) and `Y` is any expression
+//! 2. A variable `a`, where `a` is a sequence of lowercase characters
+//! 3. A macro `A`, where `A` is a sequence of uppercase characters
+//! 4. Application `(A B)`, where `A` is an expression and `B` is one or more expressions.
+//! 5. Another expression in parenthesis
+//!
+//! Input may also contain macro definitions: `MACRO_NAME::EXPRESSION`
+//!
+//! Each line contains at most one definition or expression
 //!
 //! # Example
 //! ```rust
