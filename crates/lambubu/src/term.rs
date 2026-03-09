@@ -1,3 +1,5 @@
+//! Term implementation
+//! All strategies perform a single step at a time
 use std::fmt::{self, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;

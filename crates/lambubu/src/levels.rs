@@ -1,3 +1,5 @@
+//! Bruijn levels implementation
+//! All strategies perform a single reduction at a time
 use crate::Term;
 use std::{
     collections::{HashMap, HashSet},

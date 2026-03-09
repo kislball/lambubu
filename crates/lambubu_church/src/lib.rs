@@ -1,6 +1,15 @@
+//! Implementation of Church numerals and basic algebra
+//! The following macros are added:
+//! 1. `ADD` --- addition of two Church numerals
+//! 2. `SUCC` --- the next Church numeral
+//! 3. `IF` and `BRANCH` --- standard branching
+//! 4. `ZERO`, `0`, `FALSE`, `F`
+//! 5. `TRUE`, `T`
+//! 6. Any sequence of digits will be interpreted as a Church numeral
 use lambubu::{Term, env::TermEnvironment};
 use lambubu_macro::term;
 
+/// Environment which supplies Church numerals and algebra
 pub struct ChurchEnvironment;
 
 impl TermEnvironment for ChurchEnvironment {

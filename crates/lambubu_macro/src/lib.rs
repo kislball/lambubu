@@ -23,6 +23,7 @@ fn term_to_tokens(term: &Term) -> TokenStream2 {
     }
 }
 
+/// A simple macro which compiles a string into [lambubu::Term].
 #[proc_macro]
 pub fn term(input: TokenStream) -> TokenStream {
     let lit = parse_macro_input!(input as LitStr);

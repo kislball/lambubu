@@ -1,3 +1,27 @@
+//! The module contains compilation/preprocessing utilities for Lambubu.
+//! It is responsible for parsing and preprocessing $\lambda$-expressions into [`crate::Term`].
+//!
+//! # Example
+//! ```rust
+//! use lambubu::{compile_term, CompoundEnvironment, Term};
+//! let term = compile_term("(\\x.x y)", &mut CompoundEnvironment::new(vec![])).unwrap();
+//!
+//! assert_eq!(term, Term::app(Term::abs("x", Term::var("x")), Term::var("y")));
+//! ```
+//!
+//! ```rust
+//! use lambubu::{compile_term, CompoundEnvironment, Term, compile::CompilationError};
+//! let term = compile_term("(\\x.x y", &mut CompoundEnvironment::new(vec![]));
+//!
+//! assert!(matches!(term, Err(CompilationError::ParsingError(_, _))));
+//! ```
+//!
+//! ```rust
+//! use lambubu::{compile_term, CompoundEnvironment, Term, compile::CompilationError};
+//! let term = compile_term("(\\x.x TEST)", &mut CompoundEnvironment::new(vec![]));
+//!
+//! assert!(matches!(term, Err(CompilationError::UnknownMacros { .. } )));
+//! ```
 use crate::{
     Term,
     env::{MutableTermEnvironment, TermEnvironment},
@@ -94,18 +118,21 @@ fn compile_pair<'a>(
     }
 }
 
+/// Compiles a string slice into [crate::Term]
 pub fn compile_term<'a>(
     input: &'a str,
     env: &impl TermEnvironment,
 ) -> Result<Term, CompilationError<'a>> {
     let parse_result = LambdaParser::parse(Rule::Term, input)
-        .unwrap()
+        .map_err(|x| CompilationError::ParsingError(input, Box::new(x)))?
         .next()
         .unwrap();
 
     compile_pair(parse_result, env)
 }
 
+/// Compiles a file into a vector of [crate::Term].
+/// Also adds encountered macros to the environment.
 pub fn compile_file<'a>(
     input: &'a str,
     env: &mut impl MutableTermEnvironment,
