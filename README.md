@@ -3,6 +3,7 @@
 [![Rust Clippy](https://github.com/kislball/lambubu/actions/workflows/clippy.yml/badge.svg)](https://github.com/kislball/lambubu/actions/workflows/clippy.yml)
 [![Rust format](https://github.com/kislball/lambubu/actions/workflows/format.yml/badge.svg)](https://github.com/kislball/lambubu/actions/workflows/format.yml)
 [![Rust tests](https://github.com/kislball/lambubu/actions/workflows/tests.yml/badge.svg)](https://github.com/kislball/lambubu/actions/workflows/tests.yml)
+
 Lambda caclulus redex reducer.
 
 ## Building
