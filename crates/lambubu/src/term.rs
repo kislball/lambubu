@@ -164,10 +164,7 @@ impl Term {
                     } else {
                         let (reduced, changed) = unwrap_rc(t2).reduce_step_call_by_value();
                         (
-                            Self::Apply(
-                                Rc::new(Self::Abs(t1_name, t1_body)),
-                                Rc::new(reduced),
-                            ),
+                            Self::Apply(Rc::new(Self::Abs(t1_name, t1_body)), Rc::new(reduced)),
                             changed,
                         )
                     }

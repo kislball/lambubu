@@ -208,10 +208,7 @@ impl BruijnLevelsTerm {
                 }
                 other => {
                     let (reduced, changed) = unwrap_rc(t2).reduce_step_normal_order();
-                    (
-                        Self::Apply(Rc::new(other), Rc::new(reduced)),
-                        changed,
-                    )
+                    (Self::Apply(Rc::new(other), Rc::new(reduced)), changed)
                 }
             },
             Self::Abs(lvl, body, name) => {
@@ -233,10 +230,7 @@ impl BruijnLevelsTerm {
                     } else {
                         let (reduced, changed) = unwrap_rc(t2).reduce_step_call_by_value();
                         (
-                            Self::Apply(
-                                Rc::new(Self::Abs(lvl, body, name)),
-                                Rc::new(reduced),
-                            ),
+                            Self::Apply(Rc::new(Self::Abs(lvl, body, name)), Rc::new(reduced)),
                             changed,
                         )
                     }
@@ -259,9 +253,7 @@ impl BruijnLevelsTerm {
                     (Self::Apply(t1, Rc::new(reduced)), changed)
                 } else {
                     match unwrap_rc(t1) {
-                        Self::Abs(lvl, body, _) => {
-                            (unwrap_rc(body).substitute(lvl, t2), true)
-                        }
+                        Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
                         other => (Self::Apply(Rc::new(other), t2), false),
                     }
                 }

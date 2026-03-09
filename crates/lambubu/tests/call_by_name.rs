@@ -64,7 +64,10 @@ fn cbn_does_not_reduce_argument() {
         Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
         arg.clone(),
     );
-    assert_eq!(term.reduce_step_call_by_name().0, Term::app(arg.clone(), arg));
+    assert_eq!(
+        term.reduce_step_call_by_name().0,
+        Term::app(arg.clone(), arg)
+    );
 }
 
 #[test]

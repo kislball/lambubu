@@ -73,7 +73,10 @@ fn no_does_not_reduce_argument_before_substitution() {
         Term::abs("x", Term::app(Term::var("x"), Term::var("x"))),
         arg.clone(),
     );
-    assert_eq!(term.reduce_step_normal_order().0, Term::app(arg.clone(), arg));
+    assert_eq!(
+        term.reduce_step_normal_order().0,
+        Term::app(arg.clone(), arg)
+    );
 }
 
 #[test]
