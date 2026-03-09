@@ -1,4 +1,5 @@
 # Lambubu
+[![Rust](https://github.com/kislball/lambubu/actions/workflows/rust.yml/badge.svg)](https://github.com/kislball/lambubu/actions/workflows/rust.yml)
 Lambda caclulus redex reducer.
 
 ## Building
