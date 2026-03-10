@@ -82,7 +82,9 @@ fn bench_term<'a, M: Measurement>(group: &mut BenchmarkGroup<'a, M>, term_source
 fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("Term reductions");
 
-    bench_term(&mut group, "(ADD (ADD 200 500) (ADD 1000 1500))");
+    bench_term(&mut group, "(ADD (ADD 2000 5000) (ADD 1000 1500))");
+    bench_term(&mut group, "(ADD 1000 3000)");
+    bench_term(&mut group, "(6 5)");
 }
 
 criterion_group!(benches, bench);
