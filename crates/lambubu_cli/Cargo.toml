@@ -9,7 +9,7 @@ lambubu = { path = "../lambubu" }
 lambubu_church = { path = "../lambubu_church" }
 
 [dev-dependencies]
-criterion = "0.8.2"
+criterion = { version = "0.8.2", features = ["html_reports", "csv_output"] }
 
 [[bench]]
 name = "reduction"
