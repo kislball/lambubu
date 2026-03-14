@@ -3,7 +3,7 @@ WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
 LambdaCharacter = _{ "\\" | "λ" | ",\\" }
 Dot             = _{ "." }
 
-Variable = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHA_LOWER | "'")* }
+Variable   = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHA_LOWER | "'")* }
 MacrosName = @{ (ASCII_ALPHA_UPPER | ASCII_DIGIT)+ }
 
 Abstraction = {
