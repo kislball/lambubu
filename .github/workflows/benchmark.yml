@@ -20,14 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Run benchmarks
-        run: cargo bench --all
-
-      - name: Collect HTML reports
-        run: ./tools/collecthtmlreport.sh
+      # - name: Install Rust
+      #   uses: dtolnay/rust-toolchain@stable
+      #
+      # - name: Run benchmarks
+      #   run: cargo bench --all
+      #
+      # - name: Collect HTML reports
+      #   run: ./tools/collecthtmlreport.sh
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
