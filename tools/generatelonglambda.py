@@ -9,7 +9,7 @@ def build_expr(op, a, b):
 def generate(depth = 4):
     op = random.choice([ "ADD", "MULT", "SUCC", "PRED" ])
     if depth == 0:
-        return build_expr(op, random.randint(10, 50), random.randint(10, 50))
+        return build_expr(op, random.randint(1, 10), random.randint(1, 10))
     else:
         return build_expr(op, generate(depth - 1), generate(depth - 1))
 
