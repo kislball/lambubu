@@ -1,2 +1,3 @@
 target/
+!benchdata/target
 *.txt
