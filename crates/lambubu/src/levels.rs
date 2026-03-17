@@ -73,65 +73,28 @@ impl From<Rc<Term>> for BruijnLevelsTerm {
 
 impl BruijnLevelsTerm {
     fn to_term(&self, env: &mut HashMap<usize, Rc<str>>) -> Term {
-        enum WorkItem<'a> {
-            Visit(&'a BruijnLevelsTerm),
-            BuildAbs(Rc<str>),
-            BuildApply,
-            RestoreEnv(usize, Option<Rc<str>>),
-            SetupAbs(usize, Rc<str>, &'a BruijnLevelsTerm),
-        }
+        match self {
+            BruijnLevelsTerm::Var(lvl, name) => {
+                let resolved_name = env.get(lvl).cloned().unwrap_or_else(|| name.clone());
+                Term::Var(resolved_name)
+            }
+            BruijnLevelsTerm::Abs(lvl, body, name) => {
+                let mut distinct_name = name.clone();
+                while env.values().any(|n| n == &distinct_name) {
+                    let s: &str = &distinct_name;
+                    distinct_name = format!("{}'", s).into();
+                }
 
-        let mut work_stack: Vec<WorkItem<'_>> = vec![WorkItem::Visit(self)];
-        let mut result_stack: Vec<Term> = Vec::new();
+                env.insert(*lvl, distinct_name.clone());
+                let body_term = body.to_term(env);
+                env.remove(lvl);
 
-        while let Some(item) = work_stack.pop() {
-            match item {
-                WorkItem::Visit(term) => match term {
-                    BruijnLevelsTerm::Var(lvl, name) => {
-                        let resolved_name = env.get(lvl).cloned().unwrap_or_else(|| name.clone());
-                        result_stack.push(Term::Var(resolved_name));
-                    }
-                    BruijnLevelsTerm::Abs(lvl, body, name) => {
-                        work_stack.push(WorkItem::SetupAbs(*lvl, name.clone(), body));
-                    }
-                    BruijnLevelsTerm::Apply(t1, t2) => {
-                        work_stack.push(WorkItem::BuildApply);
-                        work_stack.push(WorkItem::Visit(t2));
-                        work_stack.push(WorkItem::Visit(t1));
-                    }
-                },
-                WorkItem::SetupAbs(lvl, name, body) => {
-                    let mut distinct_name = name;
-                    while env.values().any(|n| n == &distinct_name) {
-                        let s: &str = &distinct_name;
-                        distinct_name = format!("{}'", s).into();
-                    }
-
-                    let old_val = env.insert(lvl, distinct_name.clone());
-                    work_stack.push(WorkItem::BuildAbs(distinct_name));
-                    work_stack.push(WorkItem::RestoreEnv(lvl, old_val));
-                    work_stack.push(WorkItem::Visit(body));
-                }
-                WorkItem::RestoreEnv(lvl, old_val) => {
-                    if let Some(v) = old_val {
-                        env.insert(lvl, v);
-                    } else {
-                        env.remove(&lvl);
-                    }
-                }
-                WorkItem::BuildAbs(name) => {
-                    let body = result_stack.pop().unwrap();
-                    result_stack.push(Term::Abs(name, Rc::new(body)));
-                }
-                WorkItem::BuildApply => {
-                    let t2 = result_stack.pop().unwrap();
-                    let t1 = result_stack.pop().unwrap();
-                    result_stack.push(Term::Apply(Rc::new(t1), Rc::new(t2)));
-                }
+                Term::Abs(distinct_name, Rc::new(body_term))
+            }
+            BruijnLevelsTerm::Apply(t1, t2) => {
+                Term::Apply(Rc::new(t1.to_term(env)), Rc::new(t2.to_term(env)))
             }
         }
-
-        result_stack.pop().unwrap()
     }
 
     pub fn from_open_term(term: Term) -> BruijnLevelsTerm {
@@ -170,109 +133,43 @@ impl BruijnLevelsTerm {
         dictionary: &mut HashMap<String, usize>,
         counter: &mut usize,
     ) -> Rc<BruijnLevelsTerm> {
-        enum WorkItem {
-            Visit(Rc<Term>),
-            PrepareAbs(Rc<str>, Rc<Term>),
-            RestoreDictAndBuildAbs(String, Option<usize>, usize, Rc<str>),
-            BuildApply,
-        }
-
-        let mut work_stack: Vec<WorkItem> = vec![WorkItem::Visit(term)];
-        let mut result_stack: Vec<Rc<BruijnLevelsTerm>> = Vec::new();
-
-        while let Some(item) = work_stack.pop() {
-            match item {
-                WorkItem::Visit(term) => match term.as_ref() {
-                    Term::Var(name) => {
-                        result_stack.push(Rc::new(BruijnLevelsTerm::Var(
-                            *dictionary.get(name.as_ref()).unwrap(),
-                            name.clone(),
-                        )));
-                    }
-                    Term::Abs(name, body) => {
-                        work_stack.push(WorkItem::PrepareAbs(name.clone(), body.clone()));
-                    }
-                    Term::Apply(t1, t2) => {
-                        work_stack.push(WorkItem::BuildApply);
-                        work_stack.push(WorkItem::Visit(t2.clone()));
-                        work_stack.push(WorkItem::Visit(t1.clone()));
-                    }
-                },
-                WorkItem::PrepareAbs(name, body) => {
-                    let current_level = *counter;
-                    *counter += 1;
-                    let old_val = dictionary.insert(name.to_string(), current_level);
-
-                    work_stack.push(WorkItem::RestoreDictAndBuildAbs(
-                        name.to_string(),
-                        old_val,
-                        current_level,
-                        name.clone(),
-                    ));
-                    work_stack.push(WorkItem::Visit(body));
+        match term.as_ref() {
+            Term::Var(name) => Rc::new(BruijnLevelsTerm::Var(
+                *dictionary.get(name.as_ref()).unwrap(),
+                name.clone(),
+            )),
+            Term::Abs(name, body) => {
+                let current_level = *counter;
+                *counter += 1;
+                let old_val = dictionary.insert(name.to_string(), current_level);
+                let body_res = Self::from_term(body.clone(), dictionary, counter);
+                if let Some(v) = old_val {
+                    dictionary.insert(name.to_string(), v);
+                } else {
+                    dictionary.remove(name.as_ref());
                 }
-                WorkItem::RestoreDictAndBuildAbs(name_str, old_val, level, name_rc) => {
-                    if let Some(v) = old_val {
-                        dictionary.insert(name_str, v);
-                    } else {
-                        dictionary.remove(&name_str);
-                    }
-                    let body = result_stack.pop().unwrap();
-                    result_stack.push(Rc::new(BruijnLevelsTerm::Abs(level, body, name_rc)));
-                }
-                WorkItem::BuildApply => {
-                    let t2 = result_stack.pop().unwrap();
-                    let t1 = result_stack.pop().unwrap();
-                    result_stack.push(Rc::new(BruijnLevelsTerm::Apply(t1, t2)));
-                }
+                Rc::new(BruijnLevelsTerm::Abs(current_level, body_res, name.clone()))
+            }
+            Term::Apply(t1, t2) => {
+                let t1 = BruijnLevelsTerm::from_term(t1.clone(), dictionary, counter);
+                let t2 = BruijnLevelsTerm::from_term(t2.clone(), dictionary, counter);
+                Rc::new(BruijnLevelsTerm::Apply(t1, t2))
             }
         }
-
-        result_stack.pop().unwrap()
     }
 
     pub fn substitute(self, what: usize, with: Rc<BruijnLevelsTerm>) -> BruijnLevelsTerm {
-        enum WorkItem {
-            Process(BruijnLevelsTerm),
-            BuildAbs(usize, Rc<str>),
-            BuildApply,
-        }
-
-        let mut work_stack: Vec<WorkItem> = vec![WorkItem::Process(self)];
-        let mut result_stack: Vec<BruijnLevelsTerm> = Vec::new();
-
-        while let Some(item) = work_stack.pop() {
-            match item {
-                WorkItem::Process(term) => match term {
-                    BruijnLevelsTerm::Var(val, _) if val == what => {
-                        result_stack.push(unwrap_rc(with.clone()));
-                    }
-                    BruijnLevelsTerm::Abs(lvl, body, name) if lvl != what => {
-                        work_stack.push(WorkItem::BuildAbs(lvl, name));
-                        work_stack.push(WorkItem::Process(unwrap_rc(body)));
-                    }
-                    BruijnLevelsTerm::Apply(a, b) => {
-                        work_stack.push(WorkItem::BuildApply);
-                        work_stack.push(WorkItem::Process(unwrap_rc(b)));
-                        work_stack.push(WorkItem::Process(unwrap_rc(a)));
-                    }
-                    other => {
-                        result_stack.push(other);
-                    }
-                },
-                WorkItem::BuildAbs(lvl, name) => {
-                    let body = result_stack.pop().unwrap();
-                    result_stack.push(BruijnLevelsTerm::Abs(lvl, Rc::new(body), name));
-                }
-                WorkItem::BuildApply => {
-                    let b = result_stack.pop().unwrap();
-                    let a = result_stack.pop().unwrap();
-                    result_stack.push(BruijnLevelsTerm::Apply(Rc::new(a), Rc::new(b)));
-                }
+        match self {
+            BruijnLevelsTerm::Var(val, _) if val == what => unwrap_rc(with),
+            BruijnLevelsTerm::Abs(lvl, body, name) if lvl != what => {
+                BruijnLevelsTerm::Abs(lvl, Rc::new(unwrap_rc(body).substitute(what, with)), name)
             }
+            BruijnLevelsTerm::Apply(a, b) => BruijnLevelsTerm::Apply(
+                Rc::new(unwrap_rc(a).substitute(what, with.clone())),
+                Rc::new(unwrap_rc(b).substitute(what, with)),
+            ),
+            _ => self,
         }
-
-        result_stack.pop().unwrap()
     }
 
     pub fn is_value(&self) -> bool {
@@ -280,228 +177,94 @@ impl BruijnLevelsTerm {
     }
 
     pub fn is_normal_form(&self) -> bool {
-        let mut stack: Vec<&BruijnLevelsTerm> = vec![self];
-        while let Some(term) = stack.pop() {
-            match term {
-                Self::Var(_, _) => {}
-                Self::Abs(_, body, _) => stack.push(body),
-                Self::Apply(t1, t2) => match t1.as_ref() {
-                    Self::Abs(_, _, _) => return false,
-                    _ => {
-                        stack.push(t1);
-                        stack.push(t2);
-                    }
-                },
-            }
+        match self {
+            Self::Var(_, _) => true,
+            Self::Abs(_, body, _) => body.is_normal_form(),
+            Self::Apply(t1, t2) => match t1.as_ref() {
+                Self::Abs(_, _, _) => false,
+                _ => t1.is_normal_form() && t2.is_normal_form(),
+            },
         }
-        true
     }
 
     pub fn reduce_step_call_by_name(self) -> (BruijnLevelsTerm, bool) {
-        enum Frame {
-            ApplyLeft(Rc<BruijnLevelsTerm>),
-        }
-
-        let mut frames: Vec<Frame> = Vec::new();
-        let mut current = self;
-
-        loop {
-            match current {
-                Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                    Self::Abs(lvl, body, _) => {
-                        let mut result = unwrap_rc(body).substitute(lvl, t2);
-                        for frame in frames.into_iter().rev() {
-                            let Frame::ApplyLeft(t2) = frame;
-                            result = Self::Apply(Rc::new(result), t2);
-                        }
-                        return (result, true);
-                    }
-                    other => {
-                        frames.push(Frame::ApplyLeft(t2));
-                        current = other;
-                    }
-                },
-                _ => {
-                    let mut result = current;
-                    for frame in frames.into_iter().rev() {
-                        let Frame::ApplyLeft(t2) = frame;
-                        result = Self::Apply(Rc::new(result), t2);
-                    }
-                    return (result, false);
+        match self {
+            Self::Apply(t1, t2) => match unwrap_rc(t1) {
+                Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
+                other => {
+                    let (reduced, changed) = other.reduce_step_call_by_name();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 }
-            }
+            },
+            _ => (self, false),
         }
     }
 
     pub fn reduce_step_normal_order(self) -> (BruijnLevelsTerm, bool) {
-        enum Frame {
-            ApplyLeft(Rc<BruijnLevelsTerm>),
-            ApplyRight(Rc<BruijnLevelsTerm>),
-            Abs(usize, Rc<str>),
-        }
-
-        let mut frames: Vec<Frame> = Vec::new();
-        let mut current = self;
-
-        loop {
-            match current {
-                Self::Apply(t1, t2) => match unwrap_rc(t1) {
-                    Self::Abs(lvl, body, _) => {
-                        let mut result = unwrap_rc(body).substitute(lvl, t2);
-                        for frame in frames.into_iter().rev() {
-                            result = match frame {
-                                Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                                Frame::ApplyRight(t1) => Self::Apply(t1, Rc::new(result)),
-                                Frame::Abs(lvl, name) => Self::Abs(lvl, Rc::new(result), name),
-                            };
-                        }
-                        return (result, true);
-                    }
-                    other if !other.is_normal_form() => {
-                        frames.push(Frame::ApplyLeft(t2));
-                        current = other;
-                    }
-                    other => {
-                        frames.push(Frame::ApplyRight(Rc::new(other)));
-                        current = unwrap_rc(t2);
-                    }
-                },
-                Self::Abs(lvl, body, name) => {
-                    frames.push(Frame::Abs(lvl, name));
-                    current = unwrap_rc(body);
+        match self {
+            Self::Apply(t1, t2) => match unwrap_rc(t1) {
+                Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
+                other if !other.is_normal_form() => {
+                    let (reduced, changed) = other.reduce_step_normal_order();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 }
                 other => {
-                    let mut result = other;
-                    for frame in frames.into_iter().rev() {
-                        result = match frame {
-                            Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                            Frame::ApplyRight(t1) => Self::Apply(t1, Rc::new(result)),
-                            Frame::Abs(lvl, name) => Self::Abs(lvl, Rc::new(result), name),
-                        };
-                    }
-                    return (result, false);
+                    let (reduced, changed) = unwrap_rc(t2).reduce_step_normal_order();
+                    (Self::Apply(Rc::new(other), Rc::new(reduced)), changed)
                 }
+            },
+            Self::Abs(lvl, body, name) => {
+                let (reduced, changed) = unwrap_rc(body).reduce_step_normal_order();
+                (Self::Abs(lvl, Rc::new(reduced), name), changed)
             }
+            _ => (self, false),
         }
     }
 
     pub fn reduce_step_call_by_value(self) -> (BruijnLevelsTerm, bool) {
-        enum Frame {
-            ApplyLeft(Rc<BruijnLevelsTerm>),
-            ApplyRightAbs(usize, Rc<BruijnLevelsTerm>, Rc<str>),
-        }
-
-        let mut frames: Vec<Frame> = Vec::new();
-        let mut current = self;
-
-        loop {
-            match current {
-                Self::Var(_, _) | Self::Abs(_, _, _) => {
-                    let mut result = current;
-                    for frame in frames.into_iter().rev() {
-                        result = match frame {
-                            Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                            Frame::ApplyRightAbs(lvl, body, name) => {
-                                Self::Apply(Rc::new(Self::Abs(lvl, body, name)), Rc::new(result))
-                            }
-                        };
-                    }
-                    return (result, false);
-                }
-                Self::Apply(t1, t2) => {
-                    let t1_inner = unwrap_rc(t1);
-                    if let Self::Abs(lvl, body, name) = t1_inner {
-                        if t2.is_value() {
-                            let mut result = unwrap_rc(body).substitute(lvl, t2);
-                            for frame in frames.into_iter().rev() {
-                                result = match frame {
-                                    Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                                    Frame::ApplyRightAbs(lvl, body, name) => Self::Apply(
-                                        Rc::new(Self::Abs(lvl, body, name)),
-                                        Rc::new(result),
-                                    ),
-                                };
-                            }
-                            return (result, true);
-                        } else {
-                            frames.push(Frame::ApplyRightAbs(lvl, body, name));
-                            current = unwrap_rc(t2);
-                        }
+        match self {
+            Self::Var(_, _) | Self::Abs(_, _, _) => (self, false),
+            Self::Apply(t1, t2) => {
+                let t1_inner = unwrap_rc(t1);
+                if let Self::Abs(lvl, body, name) = t1_inner {
+                    if t2.is_value() {
+                        (unwrap_rc(body).substitute(lvl, t2), true)
                     } else {
-                        frames.push(Frame::ApplyLeft(t2));
-                        current = t1_inner;
+                        let (reduced, changed) = unwrap_rc(t2).reduce_step_call_by_value();
+                        (
+                            Self::Apply(Rc::new(Self::Abs(lvl, body, name)), Rc::new(reduced)),
+                            changed,
+                        )
                     }
+                } else {
+                    let (reduced, changed) = t1_inner.reduce_step_call_by_value();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
                 }
             }
         }
     }
 
     pub fn reduce_step_applicative_order(self) -> (BruijnLevelsTerm, bool) {
-        enum Frame {
-            ApplyLeft(Rc<BruijnLevelsTerm>),
-            ApplyRight(Rc<BruijnLevelsTerm>),
-            Abs(usize, Rc<str>),
-        }
-
-        let mut frames: Vec<Frame> = Vec::new();
-        let mut current = self;
-
-        loop {
-            match current {
-                Self::Apply(t1, t2) => {
-                    if !t1.is_normal_form() {
-                        frames.push(Frame::ApplyLeft(t2));
-                        current = unwrap_rc(t1);
-                    } else if !t2.is_normal_form() {
-                        frames.push(Frame::ApplyRight(t1));
-                        current = unwrap_rc(t2);
-                    } else {
-                        match unwrap_rc(t1) {
-                            Self::Abs(lvl, body, _) => {
-                                let mut result = unwrap_rc(body).substitute(lvl, t2);
-                                for frame in frames.into_iter().rev() {
-                                    result = match frame {
-                                        Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                                        Frame::ApplyRight(t1) => Self::Apply(t1, Rc::new(result)),
-                                        Frame::Abs(lvl, name) => {
-                                            Self::Abs(lvl, Rc::new(result), name)
-                                        }
-                                    };
-                                }
-                                return (result, true);
-                            }
-                            other => {
-                                let mut result = Self::Apply(Rc::new(other), t2);
-                                for frame in frames.into_iter().rev() {
-                                    result = match frame {
-                                        Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                                        Frame::ApplyRight(t1) => Self::Apply(t1, Rc::new(result)),
-                                        Frame::Abs(lvl, name) => {
-                                            Self::Abs(lvl, Rc::new(result), name)
-                                        }
-                                    };
-                                }
-                                return (result, false);
-                            }
-                        }
+        match self {
+            Self::Apply(t1, t2) => {
+                if !t1.is_normal_form() {
+                    let (reduced, changed) = unwrap_rc(t1).reduce_step_applicative_order();
+                    (Self::Apply(Rc::new(reduced), t2), changed)
+                } else if !t2.is_normal_form() {
+                    let (reduced, changed) = unwrap_rc(t2).reduce_step_applicative_order();
+                    (Self::Apply(t1, Rc::new(reduced)), changed)
+                } else {
+                    match unwrap_rc(t1) {
+                        Self::Abs(lvl, body, _) => (unwrap_rc(body).substitute(lvl, t2), true),
+                        other => (Self::Apply(Rc::new(other), t2), false),
                     }
-                }
-                Self::Abs(lvl, body, name) => {
-                    frames.push(Frame::Abs(lvl, name));
-                    current = unwrap_rc(body);
-                }
-                other => {
-                    let mut result = other;
-                    for frame in frames.into_iter().rev() {
-                        result = match frame {
-                            Frame::ApplyLeft(t2) => Self::Apply(Rc::new(result), t2),
-                            Frame::ApplyRight(t1) => Self::Apply(t1, Rc::new(result)),
-                            Frame::Abs(lvl, name) => Self::Abs(lvl, Rc::new(result), name),
-                        };
-                    }
-                    return (result, false);
                 }
             }
+            Self::Abs(lvl, body, name) => {
+                let (reduced, changed) = unwrap_rc(body).reduce_step_applicative_order();
+                (Self::Abs(lvl, Rc::new(reduced), name), changed)
+            }
+            _ => (self, false),
         }
     }
 }
