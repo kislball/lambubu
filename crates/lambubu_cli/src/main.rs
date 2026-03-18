@@ -25,6 +25,9 @@ pub struct Options {
     #[arg(long, short, default_value = "false")]
     bruijn: bool,
 
+    #[arg(long, short, default_value = "true")]
+    reduce: bool,
+
     #[arg(long, short, value_enum, default_value = "applicative")]
     strategy: Strategy,
 }
@@ -62,6 +65,10 @@ fn main() {
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer).unwrap();
     let terms = compile_file(&buffer, &mut standard_environment()).unwrap();
+
+    if !options.reduce {
+        return;
+    }
 
     let reducer: fn(Term) -> (Term, bool) = match options.strategy {
         Strategy::Applicative => reduce_applicative,
