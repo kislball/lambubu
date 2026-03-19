@@ -13,9 +13,13 @@ const TERMS: &[&str] = &[
     "(3 4)",
     "(4 3)",
     "(4 4)",
-    "(ADD (PRED (SUCC (MULT (ADD 1 2) (PRED 8)))) (SUCC (MULT (ADD (PRED 8) (SUCC 2)) (MULT (ADD 6 4) (ADD 9 8)))))",
-    "(MULT (PRED (PRED (MULT (MULT 2 5) (ADD 9 1)))) (ADD (ADD (SUCC (SUCC 6)) (PRED (ADD 2 10))) (SUCC (ADD (ADD 6 9) (MULT 4 7)))))",
-    "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
+    "(ADD (PRED (SUCC (MULT (ADD 1 2) (PRED 8)))) \
+     (SUCC (MULT (ADD (PRED 8) (SUCC 2)) (MULT (ADD 6 4) (ADD 9 8)))))",
+    "(MULT (PRED (PRED (MULT (MULT 2 5) (ADD 9 1)))) \
+     (ADD (ADD (SUCC (SUCC 6)) (PRED (ADD 2 10))) \
+          (SUCC (ADD (ADD 6 9) (MULT 4 7)))))",
+    "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) \
+     (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
     "(IF (EQ 5 (ADD 2 3)) 7 4)",
     "(IF (EQ 5 (ADD 4 3)) 7 4)",
     "(FACT_ITER 5)",
@@ -27,6 +31,7 @@ fn bench_strategy<'a, M: Measurement>(
     strategy_name: &str,
     standard_reducer: fn(Term) -> (Term, bool),
     bruijn_reducer: fn(BruijnLevelsTerm) -> (BruijnLevelsTerm, bool),
+    per_term: bool,
 ) {
     let env = standard_environment();
     let terms: Vec<Term> = TERMS
@@ -35,61 +40,132 @@ fn bench_strategy<'a, M: Measurement>(
         .collect();
     let bruijn_terms: Vec<BruijnLevelsTerm> = terms.iter().cloned().map(Term::into).collect();
 
-    group.bench_function(format!("{strategy_name} - Standard"), |b| {
-        b.iter(|| {
-            for mut term in terms.clone() {
-                loop {
-                    let (next, changed) = standard_reducer(term);
-                    term = next;
-                    if !changed {
-                        break;
+    if per_term {
+        for term in terms {
+            group.bench_function(format!("{strategy_name} - Standard: {term}"), |b| {
+                let term = term.clone();
+                b.iter(move || {
+                    let mut term = term.clone();
+                    loop {
+                        let (next, changed) = standard_reducer(term);
+                        term = next;
+                        if !changed {
+                            break;
+                        }
                     }
-                }
-            }
-        });
-    });
+                });
+            });
+        }
 
-    group.bench_function(format!("{strategy_name} - Bruijn"), |b| {
-        b.iter(|| {
-            for mut term in bruijn_terms.clone() {
-                loop {
-                    let (next, changed) = bruijn_reducer(term);
-                    term = next;
-                    if !changed {
-                        break;
+        for term in bruijn_terms {
+            let standard = Term::from(term.clone());
+            group.bench_function(format!("{strategy_name} - Bruijn: {standard}"), |b| {
+                let term = term.clone();
+                b.iter(|| {
+                    loop {
+                        let mut term = term.clone();
+                        let (next, changed) = bruijn_reducer(term);
+                        term = next;
+                        if !changed {
+                            break;
+                        }
+                    }
+                });
+            });
+        }
+    } else {
+        group.bench_function(format!("{strategy_name} - Standard"), |b| {
+            b.iter(|| {
+                for mut term in terms.clone() {
+                    loop {
+                        let (next, changed) = standard_reducer(term);
+                        term = next;
+                        if !changed {
+                            break;
+                        }
                     }
                 }
-            }
+            });
         });
-    });
+
+        group.bench_function(format!("{strategy_name} - Bruijn"), |b| {
+            b.iter(|| {
+                for mut term in bruijn_terms.clone() {
+                    loop {
+                        let (next, changed) = bruijn_reducer(term);
+                        term = next;
+                        if !changed {
+                            break;
+                        }
+                    }
+                }
+            });
+        });
+    }
 }
 
 fn bench(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Term reductions");
+    let mut group = c.benchmark_group("Aggregate");
 
     bench_strategy(
         &mut group,
         "Normal order",
         Term::reduce_step_normal_order,
         BruijnLevelsTerm::reduce_step_normal_order,
+        false,
     );
     bench_strategy(
         &mut group,
         "Applicative order",
         Term::reduce_step_applicative_order,
         BruijnLevelsTerm::reduce_step_applicative_order,
+        false,
     );
     bench_strategy(
         &mut group,
         "Call by name",
         Term::reduce_step_call_by_name,
         BruijnLevelsTerm::reduce_step_call_by_name,
+        false,
     );
     bench_strategy(
         &mut group,
         "Call by value",
         Term::reduce_step_call_by_value,
         BruijnLevelsTerm::reduce_step_call_by_value,
+        false,
+    );
+    drop(group);
+
+    let mut group = c.benchmark_group("Individual");
+
+    bench_strategy(
+        &mut group,
+        "Normal order",
+        Term::reduce_step_normal_order,
+        BruijnLevelsTerm::reduce_step_normal_order,
+        true,
+    );
+    bench_strategy(
+        &mut group,
+        "Applicative order",
+        Term::reduce_step_applicative_order,
+        BruijnLevelsTerm::reduce_step_applicative_order,
+        true,
+    );
+    bench_strategy(
+        &mut group,
+        "Call by name",
+        Term::reduce_step_call_by_name,
+        BruijnLevelsTerm::reduce_step_call_by_name,
+        true,
+    );
+    bench_strategy(
+        &mut group,
+        "Call by value",
+        Term::reduce_step_call_by_value,
+        BruijnLevelsTerm::reduce_step_call_by_value,
+        true,
     );
 }
 

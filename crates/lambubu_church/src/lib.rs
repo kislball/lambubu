@@ -12,7 +12,7 @@
 //! 10. `PRED` --- predecessor (n-1)
 //! 11. `SUB` --- subtraction
 //! 12. `FACT` --- factorial using Y combinator
-use lambubu::{env::TermEnvironment, Term};
+use lambubu::{Term, env::TermEnvironment};
 use lambubu_macro::term;
 
 /// Environment which supplies Church numerals and algebra
