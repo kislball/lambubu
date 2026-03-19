@@ -41,8 +41,8 @@ fn bench_strategy<'a, M: Measurement>(
     let bruijn_terms: Vec<BruijnLevelsTerm> = terms.iter().cloned().map(Term::into).collect();
 
     if per_term {
-        for term in terms {
-            group.bench_function(format!("{strategy_name} - Standard: {term}"), |b| {
+        for (term, term_str) in terms.iter().zip(TERMS.iter()) {
+            group.bench_function(format!("{strategy_name} - Standard: {term_str}"), |b| {
                 let term = term.clone();
                 b.iter(move || {
                     let mut term = term.clone();
@@ -57,9 +57,9 @@ fn bench_strategy<'a, M: Measurement>(
             });
         }
 
-        for term in bruijn_terms {
+        for (term, term_str) in bruijn_terms.iter().zip(TERMS.iter()) {
             let standard = Term::from(term.clone());
-            group.bench_function(format!("{strategy_name} - Bruijn: {standard}"), |b| {
+            group.bench_function(format!("{strategy_name} - Bruijn: {term_str}"), |b| {
                 let term = term.clone();
                 b.iter(|| {
                     loop {
