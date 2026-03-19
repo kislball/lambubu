@@ -10,15 +10,14 @@ fn standard_environment() -> CompoundEnvironment {
 
 const TERMS: &[&str] = &[
     "(5 5)",
+    "(3 4)",
+    "(4 3)",
+    "(4 4)",
     "(ADD (PRED (SUCC (MULT (ADD 1 2) (PRED 8)))) (SUCC (MULT (ADD (PRED 8) (SUCC 2)) (MULT (ADD 6 4) (ADD 9 8)))))",
     "(MULT (PRED (PRED (MULT (MULT 2 5) (ADD 9 1)))) (ADD (ADD (SUCC (SUCC 6)) (PRED (ADD 2 10))) (SUCC (ADD (ADD 6 9) (MULT 4 7)))))",
     "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
-    "(ADD (PRED (SUCC (MULT (ADD 1 2) (PRED 8)))) (SUCC (MULT (ADD (PRED 8) (SUCC 2)) (MULT (ADD 6 4) (ADD 9 8)))))",
-    "(MULT (PRED (PRED (MULT (MULT 2 5) (ADD 9 1)))) (ADD (ADD (SUCC (SUCC 6)) (PRED (ADD 2 10))) (SUCC (ADD (ADD 6 9) (MULT 4 7)))))",
-    "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
-    "(ADD (PRED (SUCC (MULT (ADD 1 2) (PRED 8)))) (SUCC (MULT (ADD (PRED 8) (SUCC 2)) (MULT (ADD 6 4) (ADD 9 8)))))",
-    "(MULT (PRED (PRED (MULT (MULT 2 5) (ADD 9 1)))) (ADD (ADD (SUCC (SUCC 6)) (PRED (ADD 2 10))) (SUCC (ADD (ADD 6 9) (MULT 4 7)))))",
-    "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
+    "(IF (EQ 5 (ADD 2 3)) 7 4)",
+    "(IF (EQ 5 (ADD 4 3)) 7 4)",
 ];
 
 fn bench_strategy<'a, M: Measurement>(
