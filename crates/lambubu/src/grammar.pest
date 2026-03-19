@@ -4,7 +4,7 @@ LambdaCharacter = _{ "\\" | "λ" | ",\\" }
 Dot             = _{ "." }
 
 Variable   = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHA_LOWER | "'")* }
-MacrosName = @{ (ASCII_ALPHA_UPPER | ASCII_DIGIT)+ }
+MacrosName = @{ (ASCII_ALPHA_UPPER | ASCII_DIGIT | "_")+ }
 
 Abstraction = {
     LambdaCharacter ~ Variable ~ Dot ~ Term
