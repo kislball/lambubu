@@ -18,6 +18,8 @@ const TERMS: &[&str] = &[
     "(MULT (SUCC (SUCC (SUCC (SUCC 4)))) (SUCC (SUCC (MULT (MULT 7 3) (SUCC 5)))))",
     "(IF (EQ 5 (ADD 2 3)) 7 4)",
     "(IF (EQ 5 (ADD 4 3)) 7 4)",
+    "(FACT_ITER 5)",
+    "(FACT_ITER 3)",
 ];
 
 fn bench_strategy<'a, M: Measurement>(

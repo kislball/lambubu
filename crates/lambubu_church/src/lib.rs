@@ -25,6 +25,7 @@ impl TermEnvironment for ChurchEnvironment {
             "AND" => Some(self.and()),
             "EQ" => Some(self.eq()),
             "FACT" => Some(self.factorial()),
+            "FACT_ITER" => Some(self.factorial_iter()),
             "FALSE" | "F" => Some(self.bool_false()),
             "IF" | "BRANCH" => Some(self.branch()),
             "ISZERO" => Some(self.iszero()),
@@ -36,6 +37,9 @@ impl TermEnvironment for ChurchEnvironment {
             "Y" => Some(self.y()),
             "Z" => Some(self.z()),
             "ZERO" | "0" => Some(self.zero()),
+            "PAIR" => Some(self.pair()),
+            "FST" => Some(self.fst()),
+            "SND" => Some(self.snd()),
             rest => rest.parse::<u32>().map(|x| self.numeral(x)).ok(),
         }
     }
@@ -228,6 +232,52 @@ impl ChurchEnvironment {
                             Term::app(Term::var("f"), Term::app(self.pred(), Term::var("n"))),
                         ),
                     ),
+                ),
+            ),
+        )
+    }
+
+    pub fn pair(&self) -> Term {
+        Term::abs(
+            "a",
+            Term::abs(
+                "b",
+                Term::abs(
+                    "f",
+                    Term::app(Term::app(Term::var("f"), Term::var("a")), Term::var("b")),
+                ),
+            ),
+        )
+    }
+
+    pub fn fst(&self) -> Term {
+        Term::abs("p", Term::app(Term::var("p"), self.bool_true()))
+    }
+
+    pub fn snd(&self) -> Term {
+        Term::abs("p", Term::app(Term::var("p"), self.bool_false()))
+    }
+
+    pub fn factorial_iter(&self) -> Term {
+        Term::abs(
+            "n",
+            Term::app(
+                self.snd(),
+                Term::app(
+                    Term::app(
+                        Term::var("n"),
+                        Term::abs("p", {
+                            let p = Term::var("p");
+                            let fst_p = Term::app(self.fst(), p.clone());
+                            let snd_p = Term::app(self.snd(), p.clone());
+
+                            let new_fst = Term::app(self.succ(), fst_p.clone());
+                            let new_snd = Term::app(Term::app(self.mult(), fst_p), snd_p);
+
+                            Term::app(Term::app(self.pair(), new_fst), new_snd)
+                        }),
+                    ),
+                    Term::app(Term::app(self.pair(), self.numeral(1)), self.numeral(1)),
                 ),
             ),
         )
