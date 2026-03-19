@@ -12,7 +12,7 @@
 //! 10. `PRED` --- predecessor (n-1)
 //! 11. `SUB` --- subtraction
 //! 12. `FACT` --- factorial using Y combinator
-use lambubu::{Term, env::TermEnvironment};
+use lambubu::{env::TermEnvironment, Term};
 use lambubu_macro::term;
 
 /// Environment which supplies Church numerals and algebra
@@ -179,7 +179,7 @@ impl ChurchEnvironment {
             "m",
             Term::abs(
                 "n",
-                Term::app(Term::var("n"), Term::app(self.pred(), Term::var("m"))),
+                Term::app(Term::app(Term::var("n"), self.pred()), Term::var("m")),
             ),
         )
     }
@@ -199,20 +199,14 @@ impl ChurchEnvironment {
             "m",
             Term::abs("n", {
                 let iszero_sub_mn = Term::app(
-                    Term::app(
-                        self.iszero(),
-                        Term::app(Term::app(Term::var("SUB"), Term::var("m")), Term::var("n")),
-                    ),
-                    self.bool_true(),
+                    self.iszero(),
+                    Term::app(Term::app(self.sub(), Term::var("m")), Term::var("n")),
                 );
                 let iszero_sub_nm = Term::app(
-                    Term::app(
-                        self.iszero(),
-                        Term::app(Term::app(Term::var("SUB"), Term::var("n")), Term::var("m")),
-                    ),
-                    self.bool_true(),
+                    self.iszero(),
+                    Term::app(Term::app(self.sub(), Term::var("n")), Term::var("m")),
                 );
-                Term::app(Term::app(Term::var("AND"), iszero_sub_mn), iszero_sub_nm)
+                Term::app(Term::app(self.and(), iszero_sub_mn), iszero_sub_nm)
             }),
         )
     }
