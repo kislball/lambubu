@@ -58,7 +58,6 @@ fn bench_strategy<'a, M: Measurement>(
         }
 
         for (term, term_str) in bruijn_terms.iter().zip(TERMS.iter()) {
-            let standard = Term::from(term.clone());
             group.bench_function(format!("{strategy_name} - Bruijn: {term_str}"), |b| {
                 let term = term.clone();
                 b.iter(|| {
