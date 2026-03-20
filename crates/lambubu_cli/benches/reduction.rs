@@ -9,7 +9,6 @@ fn standard_environment() -> CompoundEnvironment {
 }
 
 const TERMS: &[&str] = &[
-    "(5 5)",
     "(3 4)",
     "(4 3)",
     "(4 4)",
@@ -61,8 +60,8 @@ fn bench_strategy<'a, M: Measurement>(
             group.bench_function(format!("{strategy_name} - Bruijn: {term_str}"), |b| {
                 let term = term.clone();
                 b.iter(|| {
+                    let mut term = term.clone();
                     loop {
-                        let mut term = term.clone();
                         let (next, changed) = bruijn_reducer(term);
                         term = next;
                         if !changed {
@@ -105,6 +104,7 @@ fn bench_strategy<'a, M: Measurement>(
 
 fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("Aggregate");
+    group.sample_size(25);
 
     bench_strategy(
         &mut group,
@@ -137,6 +137,7 @@ fn bench(c: &mut Criterion) {
     drop(group);
 
     let mut group = c.benchmark_group("Individual");
+    group.sample_size(40);
 
     bench_strategy(
         &mut group,
