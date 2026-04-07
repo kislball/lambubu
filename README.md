@@ -10,6 +10,8 @@ Lambda caclulus redex reducer.
 This project requires 2024 edition of Rust(>= 1.85). You can install the latest
 version using rustup, see [here](https://rustup.rs/) for more details.
 
+If you want to run benchmarks, you will have to use Rust >= 1.86.
+
 NOTE: some package managers may provide outdated versions of the Rust toolchain.
 
 ## Building
